@@ -12,3 +12,4 @@ migrations/
 logs/
 *.so
 Thumbs.db
+app/constants.py
