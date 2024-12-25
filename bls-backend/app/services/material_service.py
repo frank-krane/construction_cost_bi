@@ -25,6 +25,10 @@ class MaterialService:
             raise ValueError(f"Invalid data: {e}")
 
     @staticmethod
+    def get_material_by_id(material_id):
+        return Material.query.get(material_id)
+
+    @staticmethod
     def predict_material_data(material_id):
         # Fetch the last 5 years of data for the given material
         data = TimeSeriesData.query.filter_by(material_id=material_id).order_by(TimeSeriesData.year.desc(), TimeSeriesData.month.desc()).limit(60).all()

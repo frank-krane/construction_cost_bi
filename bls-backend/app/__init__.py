@@ -2,6 +2,7 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_apscheduler import APScheduler
+from dotenv import load_dotenv
 
 db = SQLAlchemy()
 migrate = Migrate()
@@ -13,6 +14,8 @@ from app.seeders.seed_time_series import seed_time_series
 
 class Config:
     SCHEDULER_API_ENABLED = True
+
+load_dotenv()
 
 def create_app():
     app = Flask(__name__)

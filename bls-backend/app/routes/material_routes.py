@@ -17,3 +17,8 @@ def create_material():
     data = request.json
     new_material = MaterialService.create_material(data)
     return material_schema.dump(new_material), 201
+
+@material_routes.route('/<int:material_id>', methods=['GET'])
+def get_material(material_id):
+    material = MaterialService.get_material_by_id(material_id)
+    return material_schema.dump(material)

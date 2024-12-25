@@ -19,3 +19,7 @@ class RegionService:
             return region
         except ValidationError as e:
             raise ValueError(f"Invalid data: {e}")
+
+    @staticmethod
+    def get_region_by_id(region_id):
+        return Region.query.get(region_id)

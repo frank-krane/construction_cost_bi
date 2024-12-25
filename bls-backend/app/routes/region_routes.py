@@ -12,6 +12,11 @@ def get_regions():
     regions = RegionService.get_all_regions()
     return jsonify(regions_schema.dump(regions))
 
+@region_routes.route('/<int:region_id>', methods=['GET'])
+def get_region(region_id):
+    region = RegionService.get_region_by_id(region_id)
+    return region_schema.dump(region)
+
 @region_routes.route('/', methods=['POST'])
 def create_region():
     data = request.json
