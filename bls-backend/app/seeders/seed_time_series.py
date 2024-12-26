@@ -20,7 +20,7 @@ def seed_time_series(force_seed=False):
         for entry in data:
             year = int(entry["year"])
             period = entry["period"]
-            month = int(period[1:]) if period.startswith("M") else None
+            month = get_month_from_period(period)
             value = float(entry["value"])
             ispredicted = False
             
@@ -46,6 +46,18 @@ def seed_time_series(force_seed=False):
                 )
                 db.session.add(time_series_entry)
     db.session.commit()
+
+def get_month_from_period(period):
+    if period.startswith("M"):
+        return int(period[1:])
+    elif period.startswith("Q"):
+        quarter = int(period[1:])
+        return quarter * 3  # Mapping Q1 to M3, Q2 to M6, etc.
+    elif period.startswith("S"):
+        season = int(period[1:])
+        return season * 6  # Mapping S1 to M6, S2 to M12
+    else:
+        return None
 
 if __name__ == '__main__':
     from app import create_app

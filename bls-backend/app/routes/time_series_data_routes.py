@@ -22,5 +22,7 @@ def create_time_series_data():
 
 @time_series_data_routes.route('/predict/<int:material_id>', methods=['GET'])
 def predict_material_data(material_id):
-    prediction = MaterialService.predict_material_data(material_id)
+    duration = request.args.get('duration', '5Y')
+    include_forecast = request.args.get('include_forecast', 'true').lower() == 'true'
+    prediction = MaterialService.predict_material_data(material_id, duration, include_forecast)
     return jsonify(json.loads(prediction))
