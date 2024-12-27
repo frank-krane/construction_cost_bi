@@ -1,9 +1,10 @@
 "use client";
 
 import React, { useState } from "react";
-import MaterialList from "../components/MaterialList"; // Import the MaterialList component
+import MaterialList from "../components/MaterialList";
 import { Material } from "@/types/material";
 import { TimeSeriesData } from "@/types/timeSeries";
+import MaterialChart from "../components/MaterialChart";
 
 export default function Home() {
   const [selectedMaterialId, setSelectedMaterialId] = useState<number | null>(null);
@@ -28,10 +29,9 @@ export default function Home() {
           <div>
             <div>Selected Material ID: {selectedMaterialId}</div>
             <div>Material Name: {selectedMaterial.name}</div>
-            <div>Time Series Data: {JSON.stringify(selectedTimeSeriesData)}</div>
+            <MaterialChart timeSeriesData={selectedTimeSeriesData} />
           </div>
         )}
-        {/* Add your chart component or content here */}
       </section>
     </div>
   );
