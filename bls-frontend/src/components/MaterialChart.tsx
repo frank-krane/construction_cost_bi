@@ -12,6 +12,7 @@ import {
   Tooltip,
   Legend,
   CategoryScale,
+  Filler,
 } from "chart.js";
 import { Line } from "@uconn-its/react-chartjs-2-react19-temp"; // Update this import to the correct package when react-chartjs-2 is updated to support react 19
 
@@ -23,7 +24,8 @@ ChartJS.register(
   Title,
   Tooltip,
   Legend,
-  CategoryScale
+  CategoryScale,
+  Filler
 );
 
 interface MaterialChartProps {
@@ -57,6 +59,7 @@ const MaterialChart: React.FC<MaterialChartProps> = ({ timeSeriesData }) => {
         ],
         borderColor: "green",
         backgroundColor: "rgba(0, 255, 0, 0.1)",
+        fill: "start",
       },
     ],
   };
@@ -70,6 +73,18 @@ const MaterialChart: React.FC<MaterialChartProps> = ({ timeSeriesData }) => {
       title: {
         display: true,
         text: "Material Time Series Data",
+      },
+    },
+    scales: {
+      x: {
+        grid: {
+          display: false,
+        },
+      },
+      y: {
+        grid: {
+          display: false,
+        },
       },
     },
   };
