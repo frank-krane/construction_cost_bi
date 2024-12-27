@@ -24,9 +24,14 @@ const columns = [
   { key: "lastUpdated", label: "Last Updated" },
 ];
 
-const MaterialList: React.FC = () => {
+interface MaterialListProps {
+  onSelectMaterial: (materialId: number, material: Material, timeSeriesData: TimeSeriesData) => void;
+}
+
+const MaterialList: React.FC<MaterialListProps> = ({ onSelectMaterial }) => {
   const [materials, setMaterials] = useState<Material[]>([]);
   const [data, setData] = useState<Record<number, TimeSeriesData>>({});
+  const [selectedMaterialId, setSelectedMaterialId] = useState<number | null>(null);
 
   useEffect(() => {
     getMaterials().then(setMaterials);
@@ -58,6 +63,15 @@ const MaterialList: React.FC = () => {
         {isIncrease ? " ↑" : " ↓"}
       </span>
     );
+  };
+
+  const handleRowClick = (materialId: number) => {
+    const material = materials.find((m) => m.id === materialId);
+    const timeSeriesData = data[materialId];
+    if (material && timeSeriesData) {
+      setSelectedMaterialId(materialId);
+      onSelectMaterial(materialId, material, timeSeriesData);
+    }
   };
 
   const rows = materials.map((material) => {
@@ -102,7 +116,11 @@ const MaterialList: React.FC = () => {
       </TableHeader>
       <TableBody>
         {rows.map((row) => (
-          <TableRow key={row.key}>
+          <TableRow
+            key={row.key}
+            onClick={() => handleRowClick(row.key)}
+            className={selectedMaterialId === row.key ? "bg-gray-200" : ""}
+          >
             {(columnKey) => <TableCell>{getKeyValue(row, columnKey)}</TableCell>}
           </TableRow>
         ))}
