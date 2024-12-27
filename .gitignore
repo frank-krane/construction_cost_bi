@@ -1,0 +1,95 @@
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# env files (can opt-in for committing if needed)
+.env*
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# Frontend dependencies
+bls-frontend/node_modules
+bls-frontend/.pnp
+bls-frontend.pnp.*
+bls-frontend/.yarn/*
+!bls-frontend/.yarn/patches
+!bls-frontend/.yarn/plugins
+!bls-frontend/.yarn/releases
+!bls-frontend/.yarn/versions
+
+# Frontend testing
+bls-frontend/coverage
+
+# Next.js
+bls-frontend/.next/
+bls-frontend/out/
+
+# Frontend production
+bls-frontend/build
+
+# Frontend misc
+bls-frontend/.DS_Store
+bls-frontend/*.pem
+
+# Frontend debug
+bls-frontend/npm-debug.log*
+bls-frontend/yarn-debug.log*
+bls-frontend/yarn-error.log*
+bls-frontend/.pnpm-debug.log*
+
+# Frontend env files
+bls-frontend/.env*
+
+# Vercel
+bls-frontend/.vercel
+
+# TypeScript
+bls-frontend/*.tsbuildinfo
+bls-frontend/next-env.d.ts
+
+# Backend Python
+bls-backend/__pycache__/
+bls-backend/*.py[cod]
+bls-backend/*$py.class
+bls-backend/.venv/
+bls-backend/instance/*.db
+bls-backend/*.sqlite3
+bls-backend/migrations/
+bls-backend/.env
+bls-backend/.vscode/
+bls-backend/.idea/
+bls-backend/*.log
+bls-backend/logs/
+bls-backend/*.so
+bls-backend/Thumbs.db
