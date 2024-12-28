@@ -25,13 +25,14 @@ const columns = [
 ];
 
 interface MaterialListProps {
-  onSelectMaterial: (materialId: number, material: Material, timeSeriesData: TimeSeriesData) => void;
+  onSelectMaterial: (materialId: number, material: Material) => void;
 }
 
 const MaterialList: React.FC<MaterialListProps> = ({ onSelectMaterial }) => {
   const [materials, setMaterials] = useState<Material[]>([]);
   const [data, setData] = useState<Record<number, TimeSeriesData>>({});
   const [selectedMaterialId, setSelectedMaterialId] = useState<number | null>(null);
+  const [forecastEnabled, setForecastEnabled] = useState<boolean>(true);
 
   useEffect(() => {
     getMaterials().then(setMaterials);
@@ -40,7 +41,7 @@ const MaterialList: React.FC<MaterialListProps> = ({ onSelectMaterial }) => {
   useEffect(() => {
     if (materials.length > 0) {
       materials.forEach((material) => {
-        getTimeSeriesData(material.id).then((timeSeriesData) => {
+        getTimeSeriesData(material.id, forecastEnabled).then((timeSeriesData) => {
           setData((prevData) => ({
             ...prevData,
             [material.id]: timeSeriesData,
@@ -48,7 +49,7 @@ const MaterialList: React.FC<MaterialListProps> = ({ onSelectMaterial }) => {
         });
       });
     }
-  }, [materials]);
+  }, [materials, forecastEnabled]);
 
   const calculatePercentChange = (current: number, previous: number) => {
     return ((current - previous) / previous) * 100;
@@ -67,10 +68,9 @@ const MaterialList: React.FC<MaterialListProps> = ({ onSelectMaterial }) => {
 
   const handleRowClick = (materialId: number) => {
     const material = materials.find((m) => m.id === materialId);
-    const timeSeriesData = data[materialId];
-    if (material && timeSeriesData) {
+    if (material) {
       setSelectedMaterialId(materialId);
-      onSelectMaterial(materialId, material, timeSeriesData);
+      onSelectMaterial(materialId, material);
     }
   };
 
@@ -108,24 +108,24 @@ const MaterialList: React.FC<MaterialListProps> = ({ onSelectMaterial }) => {
   }).filter((row): row is NonNullable<typeof row> => row !== null);
 
   return (
-    <Table aria-label="Material List Table">
-      <TableHeader>
-        {columns.map((column) => (
-          <TableColumn key={column.key}>{column.label}</TableColumn>
-        ))}
-      </TableHeader>
-      <TableBody>
-        {rows.map((row) => (
-          <TableRow
-            key={row.key}
-            onClick={() => handleRowClick(row.key)}
-            className={selectedMaterialId === row.key ? "bg-gray-200" : ""}
-          >
-            {(columnKey) => <TableCell>{getKeyValue(row, columnKey)}</TableCell>}
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+      <Table aria-label="Material List Table">
+        <TableHeader>
+          {columns.map((column) => (
+            <TableColumn key={column.key}>{column.label}</TableColumn>
+          ))}
+        </TableHeader>
+        <TableBody>
+          {rows.map((row) => (
+            <TableRow
+              key={row.key}
+              onClick={() => handleRowClick(row.key)}
+              className={selectedMaterialId === row.key ? "bg-gray-200" : ""}
+            >
+              {(columnKey) => <TableCell>{getKeyValue(row, columnKey)}</TableCell>}
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
   );
 };
 

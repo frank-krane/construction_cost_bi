@@ -42,7 +42,7 @@ const MaterialChart: React.FC<MaterialChartProps> = ({ timeSeriesData }) => {
   const chartRef = useRef<ChartJS<"line"> | null>(null);
 
   const historicalData = timeSeriesData.existing_data.slice().reverse();
-  const forecastedData = timeSeriesData.forecasted_data;
+  const forecastedData = timeSeriesData.forecasted_data || [];
 
   const data = {
     labels: [
