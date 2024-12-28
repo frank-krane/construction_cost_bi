@@ -7,20 +7,22 @@ import { TimeSeriesData } from "@/types/timeSeries";
 import MaterialChart from "../components/MaterialChart";
 import { getTimeSeriesData } from "../services/timeSeries";
 import { Switch } from "@nextui-org/switch";
+import { Tabs, Tab } from "@nextui-org/tabs";
 
 export default function Home() {
   const [selectedMaterialId, setSelectedMaterialId] = useState<number | null>(null);
   const [selectedMaterial, setSelectedMaterial] = useState<Material | null>(null);
   const [selectedTimeSeriesData, setSelectedTimeSeriesData] = useState<TimeSeriesData | null>(null);
   const [forecastEnabled, setForecastEnabled] = useState<boolean>(false);
+  const [duration, setDuration] = useState<string>("5Y");
 
   useEffect(() => {
     if (selectedMaterialId !== null) {
-      getTimeSeriesData(selectedMaterialId, forecastEnabled).then((timeSeriesData) => {
+      getTimeSeriesData(selectedMaterialId, forecastEnabled, duration).then((timeSeriesData) => {
         setSelectedTimeSeriesData(timeSeriesData);
       });
     }
-  }, [selectedMaterialId, forecastEnabled]);
+  }, [selectedMaterialId, forecastEnabled, duration]);
 
   const handleSelectMaterial = (materialId: number, material: Material) => {
     setSelectedMaterialId(materialId);
@@ -30,7 +32,16 @@ export default function Home() {
   const handleForecastSwitch = async (checked: boolean) => {
     setForecastEnabled(checked);
     if (selectedMaterialId !== null) {
-      const timeSeriesData = await getTimeSeriesData(selectedMaterialId, checked);
+      const timeSeriesData = await getTimeSeriesData(selectedMaterialId, checked, duration);
+      setSelectedTimeSeriesData(timeSeriesData);
+    }
+  };
+
+  const handleDurationChange = async (key: React.Key) => {
+    const durationKey = key.toString();
+    setDuration(durationKey);
+    if (selectedMaterialId !== null) {
+      const timeSeriesData = await getTimeSeriesData(selectedMaterialId, forecastEnabled, durationKey);
       setSelectedTimeSeriesData(timeSeriesData);
     }
   };
@@ -54,6 +65,11 @@ export default function Home() {
                 size="lg"
               />
             </div>
+            <Tabs selectedKey={duration} onSelectionChange={handleDurationChange}>
+              <Tab key="1Y" title="1 Year" />
+              <Tab key="5Y" title="5 Years" />
+              <Tab key="10Y" title="10 Years" />
+            </Tabs>
             <div>
               <div>Selected Material ID: {selectedMaterialId}</div>
               <div>Material Name: {selectedMaterial.name}</div>

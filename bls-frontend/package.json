@@ -12,6 +12,7 @@
     "@nextui-org/switch": "^2.2.7",
     "@nextui-org/system": "^2.4.5",
     "@nextui-org/table": "^2.2.7",
+    "@nextui-org/tabs": "^2.2.6",
     "@nextui-org/theme": "^2.4.4",
     "@uconn-its/react-chartjs-2-react19-temp": "^5.3.0",
     "chart.js": "^4.4.7",
