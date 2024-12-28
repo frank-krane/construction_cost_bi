@@ -11,12 +11,21 @@ import {
   getKeyValue,
 } from "@nextui-org/table";
 import { Material } from "../types/material";
-import { TimeSeriesData } from "../types/timeSeries";
-import { getMaterials } from "../services/materials";
-import { getTimeSeriesData } from "../services/timeSeries";
+import { getMaterialsDetailed } from "../services/materials";
 
-const columns = [
-  { key: "material", label: "Material" },
+interface DetailedDataRow {
+  [key: string]: any;
+  key: number;
+  materialName: string;
+  monthlyChange: number;
+  quarterlyChange: number;
+  semiAnnualChange: number;
+  annualChange: number;
+  lastUpdated: string;
+}
+
+const columns: { key: string; label: string }[] = [
+  { key: "materialName", label: "Material" },
   { key: "monthlyChange", label: "Monthly Change" },
   { key: "quarterlyChange", label: "Quarterly Change" },
   { key: "semiAnnualChange", label: "Semi-Annual Change" },
@@ -29,104 +38,69 @@ interface MaterialListProps {
 }
 
 const MaterialList: React.FC<MaterialListProps> = ({ onSelectMaterial }) => {
-  const [materials, setMaterials] = useState<Material[]>([]);
-  const [data, setData] = useState<Record<number, TimeSeriesData>>({});
+  const [detailedData, setDetailedData] = useState<any[]>([]);
   const [selectedMaterialId, setSelectedMaterialId] = useState<number | null>(null);
-  const [forecastEnabled, setForecastEnabled] = useState<boolean>(true);
-  const [duration, setDuration] = useState<string>("5Y");
 
   useEffect(() => {
-    getMaterials().then(setMaterials);
+    getMaterialsDetailed().then(setDetailedData).catch(console.error);
   }, []);
 
-  useEffect(() => {
-    if (materials.length > 0) {
-      materials.forEach((material) => {
-        getTimeSeriesData(material.id, forecastEnabled, duration).then((timeSeriesData) => {
-          setData((prevData) => ({
-            ...prevData,
-            [material.id]: timeSeriesData,
-          }));
-        });
-      });
-    }
-  }, [materials, forecastEnabled, duration]);
-
-  const calculatePercentChange = (current: number, previous: number) => {
-    return ((current - previous) / previous) * 100;
-  };
-
-  const renderPercentChange = (current: number, previous: number) => {
-    const percentChange = calculatePercentChange(current, previous);
-    const isIncrease = percentChange > 0;
-    return (
-      <span style={{ color: isIncrease ? "green" : "red" }}>
-        {percentChange.toFixed(2)}%
-        {isIncrease ? " ↑" : " ↓"}
-      </span>
-    );
-  };
-
   const handleRowClick = (materialId: number) => {
-    const material = materials.find((m) => m.id === materialId);
+    const material = detailedData.find((m) => m.materialId === materialId);
     if (material) {
       setSelectedMaterialId(materialId);
       onSelectMaterial(materialId, material);
     }
   };
 
-  const rows = materials.map((material) => {
-    const timeSeriesData = data[material.id];
-    if (!timeSeriesData) return null;
-
-    const latestData = timeSeriesData.existing_data[0];
-    const monthlyChange = renderPercentChange(
-      latestData.value,
-      timeSeriesData.existing_data[1]?.value || latestData.value
-    );
-    const quarterlyChange = renderPercentChange(
-      latestData.value,
-      timeSeriesData.existing_data[3]?.value || latestData.value
-    );
-    const semiAnnualChange = renderPercentChange(
-      latestData.value,
-      timeSeriesData.existing_data[6]?.value || latestData.value
-    );
-    const annualChange = renderPercentChange(
-      latestData.value,
-      timeSeriesData.existing_data[11]?.value || latestData.value
-    );
-
-    return {
-      key: material.id,
-      material: material.name,
-      monthlyChange,
-      quarterlyChange,
-      semiAnnualChange,
-      annualChange,
-      lastUpdated: `${latestData.year}-${latestData.month}`,
-    };
-  }).filter((row): row is NonNullable<typeof row> => row !== null);
+  const rows: DetailedDataRow[] = detailedData.map((item) => ({
+    key: item.materialId,
+    materialName: item.materialName,
+    monthlyChange: item.monthlyChange,
+    quarterlyChange: item.quarterlyChange,
+    semiAnnualChange: item.semiAnnualChange,
+    annualChange: item.annualChange,
+    lastUpdated: item.lastUpdated,
+  }));
 
   return (
-      <Table aria-label="Material List Table">
-        <TableHeader>
-          {columns.map((column) => (
-            <TableColumn key={column.key}>{column.label}</TableColumn>
-          ))}
-        </TableHeader>
-        <TableBody>
-          {rows.map((row) => (
-            <TableRow
-              key={row.key}
-              onClick={() => handleRowClick(row.key)}
-              className={selectedMaterialId === row.key ? "bg-gray-200" : ""}
-            >
-              {(columnKey) => <TableCell>{getKeyValue(row, columnKey)}</TableCell>}
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+    <Table aria-label="Material List Table">
+      <TableHeader>
+        {columns.map((c) => (
+          <TableColumn key={c.key}>{c.label}</TableColumn>
+        ))}
+      </TableHeader>
+      <TableBody>
+        {rows.map((row) => (
+          <TableRow
+            key={row.key}
+            onClick={() => handleRowClick(row.key)}
+            className={selectedMaterialId === row.key ? "bg-gray-200" : ""}
+          >
+            {(columnKey) => {
+              if (
+                columnKey === "monthlyChange" ||
+                columnKey === "quarterlyChange" ||
+                columnKey === "semiAnnualChange" ||
+                columnKey === "annualChange"
+              ) {
+                const change = row[columnKey];
+                const isIncrease = change > 0;
+                return (
+                  <TableCell>
+                    <span style={{ color: isIncrease ? "green" : "red" }}>
+                      {change.toFixed(2)}%
+                      {isIncrease ? " ↑" : " ↓"}
+                    </span>
+                  </TableCell>
+                );
+              }
+              return <TableCell>{row[columnKey]}</TableCell>;
+            }}
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
   );
 };
 

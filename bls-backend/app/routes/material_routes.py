@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify, request
-from app.services.material_service import MaterialService
+from app.services.material_service import MaterialService, MaterialDetailedService
 from app.schemas.material_schema import MaterialSchema
 
 material_routes = Blueprint('material_routes', __name__)
@@ -22,3 +22,8 @@ def create_material():
 def get_material(material_id):
     material = MaterialService.get_material_by_id(material_id)
     return material_schema.dump(material)
+
+@material_routes.route('/details', methods=['GET'])
+def get_materials_detailed():
+    data = MaterialDetailedService.get_materials_detailed()
+    return jsonify(data)
