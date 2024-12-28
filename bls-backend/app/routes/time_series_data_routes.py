@@ -2,7 +2,6 @@ import json
 from flask import Blueprint, jsonify, request
 from app.services.time_series_data_service import TimeSeriesDataService
 from app.schemas.time_series_data_schema import TimeSeriesDataSchema
-from app.services.material_service import MaterialService
 
 time_series_data_routes = Blueprint('time_series_routes', __name__)
 
@@ -24,5 +23,5 @@ def create_time_series_data():
 def predict_material_data(material_id):
     duration = request.args.get('duration', '5Y')
     include_forecast = request.args.get('include_forecast', 'true').lower() == 'true'
-    prediction = MaterialService.predict_material_data(material_id, duration, include_forecast)
+    prediction = TimeSeriesDataService.predict_material_data(material_id, duration, include_forecast)
     return jsonify(json.loads(prediction))
