@@ -13,6 +13,7 @@ import {
   Legend,
   CategoryScale,
   Filler,
+  TooltipItem,
 } from "chart.js";
 import { Line } from "@uconn-its/react-chartjs-2-react19-temp"; // Update this import to the correct package when react-chartjs-2 is updated to support react 19
 
@@ -28,6 +29,11 @@ ChartJS.register(
   Filler
 );
 
+const monthNames = [
+  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+];
+
 interface MaterialChartProps {
   timeSeriesData: TimeSeriesData;
 }
@@ -40,8 +46,8 @@ const MaterialChart: React.FC<MaterialChartProps> = ({ timeSeriesData }) => {
 
   const data = {
     labels: [
-      ...historicalData.map((data) => `${data.year}-${data.month}`),
-      ...forecastedData.map((data) => `${data.year}-${data.month}`),
+      ...historicalData.map((data) => `${data.year} ${monthNames[data.month - 1]}`),
+      ...forecastedData.map((data) => `${data.year} ${monthNames[data.month - 1]}`),
     ],
     datasets: [
       {
@@ -74,6 +80,16 @@ const MaterialChart: React.FC<MaterialChartProps> = ({ timeSeriesData }) => {
         display: true,
         text: "Material Time Series Data",
       },
+      tooltip: {
+        callbacks: {
+          label: function (context: TooltipItem<"line">) {
+            const label = context.dataset.label || '';
+            const value = context.raw;
+            const date = context.label;
+            return `${label}: ${value} (${date})`;
+          }
+        }
+      }
     },
     scales: {
       x: {
@@ -94,6 +110,7 @@ const MaterialChart: React.FC<MaterialChartProps> = ({ timeSeriesData }) => {
       chartRef.current.update();
     }
   }, [timeSeriesData]);
+  
 
   return <Line ref={chartRef} data={data} options={options} />;
 };
