@@ -69,6 +69,7 @@ export default function Home() {
               <Tab key="1Y" title="1 Year" />
               <Tab key="5Y" title="5 Years" />
               <Tab key="10Y" title="10 Years" />
+              <Tab key="Max" title="Max" />
             </Tabs>
             <div>
               <div>Selected Material ID: {selectedMaterialId}</div>

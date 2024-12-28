@@ -33,6 +33,7 @@ const MaterialList: React.FC<MaterialListProps> = ({ onSelectMaterial }) => {
   const [data, setData] = useState<Record<number, TimeSeriesData>>({});
   const [selectedMaterialId, setSelectedMaterialId] = useState<number | null>(null);
   const [forecastEnabled, setForecastEnabled] = useState<boolean>(true);
+  const [duration, setDuration] = useState<string>("5Y");
 
   useEffect(() => {
     getMaterials().then(setMaterials);
@@ -41,7 +42,7 @@ const MaterialList: React.FC<MaterialListProps> = ({ onSelectMaterial }) => {
   useEffect(() => {
     if (materials.length > 0) {
       materials.forEach((material) => {
-        getTimeSeriesData(material.id, forecastEnabled).then((timeSeriesData) => {
+        getTimeSeriesData(material.id, forecastEnabled, duration).then((timeSeriesData) => {
           setData((prevData) => ({
             ...prevData,
             [material.id]: timeSeriesData,
@@ -49,7 +50,7 @@ const MaterialList: React.FC<MaterialListProps> = ({ onSelectMaterial }) => {
         });
       });
     }
-  }, [materials, forecastEnabled]);
+  }, [materials, forecastEnabled, duration]);
 
   const calculatePercentChange = (current: number, previous: number) => {
     return ((current - previous) / previous) * 100;
