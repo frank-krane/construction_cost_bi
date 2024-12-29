@@ -35,15 +35,16 @@ def seed_materials():
     ]
 
     for material_name, series_id in materials:
-        if not Material.query.filter_by(series_id=series_id).first():
-            material = Material(name=material_name, series_id=series_id)
+        if not Material.query.filter_by(name=material_name).first():
+            material = Material(name=material_name)
             db.session.add(material)
+            db.session.commit()
             region = Region.query.filter_by(name='National').first()
             series = Series(series_id=series_id, material_id=material.id, region_id=region.id)
             db.session.add(series)
 
     # Handle Electricity material with multiple locations
-    electricity_material = Material(name='Electricity', series_id='CUUS0400SEHF01')
+    electricity_material = Material(name='Electricity')
     db.session.add(electricity_material)
     db.session.commit()
 

@@ -1,7 +1,6 @@
-from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
+from marshmallow import Schema, fields
 from app.models.material import Material
 
-class MaterialSchema(SQLAlchemyAutoSchema):
-    class Meta:
-        model = Material
-        load_instance = True
+class MaterialSchema(Schema):
+    id = fields.Int(dump_only=True)
+    name = fields.Str(required=True)
