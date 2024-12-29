@@ -1,5 +1,6 @@
 export interface Series {
-    seriesId: number;
+    id: number;
+    seriesId: string;
     annualChange: number;
     lastUpdated: string;
     monthlyChange: number;

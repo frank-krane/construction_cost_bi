@@ -65,7 +65,8 @@ class MaterialDetailedService:
                     return ((a - b) / b * 100) if b != 0 else 0
 
                 series_detail = {
-                    "seriesId": series.id,
+                    "id": series.id,
+                    "seriesId": series.series_id,
                     "region": {
                         "regionId": series.region.id,
                         "regionName": series.region.name
@@ -81,6 +82,7 @@ class MaterialDetailedService:
             details = {
                 "materialId": material.id,
                 "materialName": material.name,
+                "materialType": material.type.name,
                 "series": series_details
             }
             results.append(details)

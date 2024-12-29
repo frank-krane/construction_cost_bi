@@ -44,9 +44,9 @@ const MaterialList: React.FC<MaterialListProps> = ({ onSelectMaterial }) => {
   }, []);
 
   const handleRowClick = (seriesId: number) => {
-    const material = detailedData.find((m) => m.series.some((s: Series) => s.seriesId === seriesId));
+    const material = detailedData.find((m) => m.series.some((s: Series) => s.id === seriesId));
     if (material) {
-      const series = material.series.find((s: Series) => s.seriesId === seriesId);
+      const series = material.series.find((s: Series) => s.id === seriesId);
       setSelectedSeriesId(seriesId);
       onSelectMaterial(seriesId, material);
     }
@@ -54,7 +54,7 @@ const MaterialList: React.FC<MaterialListProps> = ({ onSelectMaterial }) => {
 
   const rows: DetailedDataRow[] = detailedData.flatMap((item) =>
     item.series.map((series: Series) => ({
-      key: series.seriesId,
+      key: series.id,
       materialName: item.materialName,
       monthlyChange: series.monthlyChange,
       quarterlyChange: series.quarterlyChange,
