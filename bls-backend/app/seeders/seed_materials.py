@@ -1,6 +1,7 @@
 from app import db
 from app.models.material import Material
 from app.models.region import Region
+from app.models.series import Series
 
 def seed_materials():
     if Material.query.first():
@@ -29,21 +30,35 @@ def seed_materials():
         ('Switchgear, Switchboard, Industrial Controls and Equipment', 'WPU1175'),
         ('Manufacturing and Labor Cost', 'CIU2013000000000I'),
         ('Crude Oil Import', 'EIUIR10000'),
-        ('Electricity - west', 'CUUS0400SEHF01', 'West'),
-        ('Electricity - midwest', 'CUUS0200SEHF01', 'Midwest'),
-        ('Electricity - south', 'CUUS0300SEHF01', 'South'),
-        ('Electricity - northeast', 'CUUS0100SEHF01', 'Northeast'),
         ('Transportation', 'WPU301'),
         ('Warehousing', 'WPU32')
     ]
 
-    for material_name, series_id, *region_name in materials:
+    for material_name, series_id in materials:
         if not Material.query.filter_by(series_id=series_id).first():
-            region = None
-            if region_name:
-                region = Region.query.filter_by(name=region_name[0]).first()
-            material = Material(name=material_name, series_id=series_id, region=region)
+            material = Material(name=material_name, series_id=series_id)
             db.session.add(material)
+            region = Region.query.filter_by(name='National').first()
+            series = Series(series_id=series_id, material_id=material.id, region_id=region.id)
+            db.session.add(series)
+
+    # Handle Electricity material with multiple locations
+    electricity_material = Material(name='Electricity', series_id='CUUS0400SEHF01')
+    db.session.add(electricity_material)
+    db.session.commit()
+
+    electricity_series = [
+        ('CUUS0400SEHF01', 'West'),
+        ('CUUS0200SEHF01', 'Midwest'),
+        ('CUUS0300SEHF01', 'South'),
+        ('CUUS0100SEHF01', 'Northeast')
+    ]
+
+    for series_id, region_name in electricity_series:
+        region = Region.query.filter_by(name=region_name).first()
+        series = Series(series_id=series_id, material_id=electricity_material.id, region_id=region.id)
+        db.session.add(series)
+
     db.session.commit()
 
 if __name__ == '__main__':

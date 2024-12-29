@@ -1,5 +1,6 @@
 from app import db
 from app.models.time_series_data import TimeSeriesData
+from app.models.series import Series
 from marshmallow.exceptions import ValidationError
 from app.schemas.time_series_data_schema import TimeSeriesDataSchema
 from prophet import Prophet
@@ -25,13 +26,13 @@ class TimeSeriesDataService:
             raise ValueError(f"Invalid data: {e}")
 
     @staticmethod
-    def predict_material_data(material_id, duration='5Y', include_forecast=True):
-        # Fetch the data for the given material
-        query = TimeSeriesData.query.filter_by(material_id=material_id).order_by(TimeSeriesData.year.desc(), TimeSeriesData.month.desc())
+    def predict_series_data(series_id, duration='5Y', include_forecast=True):
+        # Fetch the data for the given series
+        query = TimeSeriesData.query.filter_by(series_id=series_id).order_by(TimeSeriesData.year.desc(), TimeSeriesData.month.desc())
         data = query.all()
         
         if not data:
-            return json.dumps({"error": "No data found for the given material ID"})
+            return json.dumps({"error": "No data found for the given series ID"})
 
         # Prepare data for Prophet
         df = pd.DataFrame([{'ds': get_end_of_month_date(d.year, d.month), 'y': d.value} for d in data])
@@ -56,12 +57,12 @@ class TimeSeriesDataService:
         prediction_data = query.limit(periods_to_train).all()
         
         if not prediction_data:
-            return json.dumps({"error": "No data found for the given material ID"})
+            return json.dumps({"error": "No data found for the given series ID"})
 
         # Prepare data for Prophet
         df = pd.DataFrame([{'ds': get_end_of_month_date(d.year, d.month), 'y': d.value} for d in prediction_data])
         
-        # Fetch the data for the given material based on the specified duration
+        # Fetch the data for the given series based on the specified duration
         if periods_to_return:
             data = query.limit(periods_to_return).all()
         else:

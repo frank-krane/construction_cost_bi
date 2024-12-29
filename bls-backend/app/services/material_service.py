@@ -1,12 +1,15 @@
 from app import db
 from app.models.material import Material
+from app.models.series import Series
 from marshmallow.exceptions import ValidationError
 from app.schemas.material_schema import MaterialSchema
-from app.models.time_series_data import TimeSeriesData
+from app.schemas.series_schema import SeriesSchema
 from app.utils.date_utils import get_end_of_month_date
+from app.models.time_series_data import TimeSeriesData
 import pandas as pd
 
 material_schema = MaterialSchema()
+series_schema = SeriesSchema()
 
 class MaterialService:
     @staticmethod
@@ -34,38 +37,51 @@ class MaterialDetailedService:
         results = []
 
         for material in materials:
-            # Get most recent data points for monthly, quarterly, semi-annual, annual
-            time_series_data = (
-                TimeSeriesData.query
-                .filter_by(material_id=material.id)
-                .order_by(TimeSeriesData.year.desc(), TimeSeriesData.month.desc())
-                .all()
-            )
-            if not time_series_data:
-                continue
+            series_list = Series.query.filter_by(material_id=material.id).all()
+            series_details = []
 
-            df = pd.DataFrame([{'year': int(d.year), 'month': int(d.month), 'value': d.value}
-                               for d in time_series_data])
-            df['date'] = df.apply(lambda x: get_end_of_month_date(int(x['year']), int(x['month'])), axis=1)
-            df.sort_values(by='date', ascending=False, inplace=True)
+            for series in series_list:
+                time_series_data_query = db.session.query(TimeSeriesData).filter_by(series_id=series.id)
+                time_series_data = (
+                    time_series_data_query
+                    .order_by(TimeSeriesData.year.desc(), TimeSeriesData.month.desc())
+                    .all()
+                )
+                if not time_series_data:
+                    continue
 
-            latest = df.iloc[0]
-            monthly_previous = df.iloc[1] if len(df) > 1 else latest
-            quarterly_previous = df.iloc[3] if len(df) > 3 else latest
-            semi_annual_previous = df.iloc[6] if len(df) > 6 else latest
-            annual_previous = df.iloc[11] if len(df) > 11 else latest
+                df = pd.DataFrame([{'year': int(d.year), 'month': int(d.month), 'value': d.value}
+                                   for d in time_series_data])
+                df['date'] = df.apply(lambda x: get_end_of_month_date(int(x['year']), int(x['month'])), axis=1)
+                df.sort_values(by='date', ascending=False, inplace=True)
 
-            def calc_change(a, b):
-                return ((a - b) / b * 100) if b != 0 else 0
+                latest = df.iloc[0]
+                monthly_previous = df.iloc[1] if len(df) > 1 else latest
+                quarterly_previous = df.iloc[3] if len(df) > 3 else latest
+                semi_annual_previous = df.iloc[6] if len(df) > 6 else latest
+                annual_previous = df.iloc[11] if len(df) > 11 else latest
+
+                def calc_change(a, b):
+                    return ((a - b) / b * 100) if b != 0 else 0
+
+                series_detail = {
+                    "seriesId": series.id,
+                    "region": {
+                        "regionId": series.region.id,
+                        "regionName": series.region.name
+                    },
+                    "monthlyChange": calc_change(latest['value'], monthly_previous['value']),
+                    "quarterlyChange": calc_change(latest['value'], quarterly_previous['value']),
+                    "semiAnnualChange": calc_change(latest['value'], semi_annual_previous['value']),
+                    "annualChange": calc_change(latest['value'], annual_previous['value']),
+                    "lastUpdated": f"{int(latest['year'])}-{int(latest['month'])}"
+                }
+                series_details.append(series_detail)
 
             details = {
                 "materialId": material.id,
                 "materialName": material.name,
-                "monthlyChange": calc_change(latest['value'], monthly_previous['value']),
-                "quarterlyChange": calc_change(latest['value'], quarterly_previous['value']),
-                "semiAnnualChange": calc_change(latest['value'], semi_annual_previous['value']),
-                "annualChange": calc_change(latest['value'], annual_previous['value']),
-                "lastUpdated": f"{int(latest['year'])}-{int(latest['month'])}"
+                "series": series_details
             }
             results.append(details)
         return results

@@ -6,7 +6,7 @@ def seed_regions():
         print("Region table already has data. Skipping seeding.")
         return
 
-    regions = ['West', 'Midwest', 'South', 'Northeast']
+    regions = ['West', 'Midwest', 'South', 'Northeast', 'National']
     for region_name in regions:
         if not Region.query.filter_by(name=region_name).first():
             region = Region(name=region_name)

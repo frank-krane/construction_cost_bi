@@ -19,9 +19,9 @@ def create_time_series_data():
     new_time_series_data = TimeSeriesDataService.create_time_series_data(data)
     return time_series_data_schema.dump(new_time_series_data), 201
 
-@time_series_data_routes.route('/predict/<int:material_id>', methods=['GET'])
-def predict_material_data(material_id):
+@time_series_data_routes.route('/predict/<int:series_id>', methods=['GET'])
+def predict_series_data(series_id):
     duration = request.args.get('duration', '5Y')
     include_forecast = request.args.get('include_forecast', 'true').lower() == 'true'
-    prediction = TimeSeriesDataService.predict_material_data(material_id, duration, include_forecast)
+    prediction = TimeSeriesDataService.predict_series_data(series_id, duration, include_forecast)
     return jsonify(json.loads(prediction))
