@@ -11,6 +11,7 @@ import {
 } from "@nextui-org/table";
 import { Material, Series } from "../types/material";
 import { getMaterialsDetailed } from "../services/materials";
+import { Tabs, Tab } from "@nextui-org/tabs";
 
 interface DetailedDataRow {
   key: number;
@@ -24,11 +25,12 @@ interface DetailedDataRow {
 
 const columns: { key: string; label: string }[] = [
   { key: "materialName", label: "Material" },
+  { key: "seriesId", label: "Series ID" },
+  { key: "lastUpdated", label: "Last Updated" },
   { key: "monthlyChange", label: "Monthly Change" },
   { key: "quarterlyChange", label: "Quarterly Change" },
   { key: "semiAnnualChange", label: "Semi-Annual Change" },
   { key: "annualChange", label: "Annual Change" },
-  { key: "lastUpdated", label: "Last Updated" },
 ];
 
 interface MaterialListProps {
@@ -37,7 +39,7 @@ interface MaterialListProps {
 
 const MaterialList: React.FC<MaterialListProps> = ({ onSelectMaterial }) => {
   const [detailedData, setDetailedData] = useState<Material[]>([]);
-  const [selectedSeriesId, setSelectedSeriesId] = useState<number | null>(null);
+  const [groupBy, setGroupBy] = useState<"type" | "region">("type");
 
   useEffect(() => {
     getMaterialsDetailed().then(setDetailedData).catch(console.error);
@@ -47,7 +49,6 @@ const MaterialList: React.FC<MaterialListProps> = ({ onSelectMaterial }) => {
     const material = detailedData.find((m) => m.series.some((s: Series) => s.id === seriesId));
     if (material) {
       const series = material.series.find((s: Series) => s.id === seriesId);
-      setSelectedSeriesId(seriesId);
       onSelectMaterial(seriesId, material);
     }
   };
@@ -64,44 +65,69 @@ const MaterialList: React.FC<MaterialListProps> = ({ onSelectMaterial }) => {
     }))
   );
 
+  const groupedMaterials = detailedData.reduce((acc, material) => {
+    material.series.forEach((series) => {
+      const key = groupBy === "type" ? material.materialType : series.region.regionName;
+      if (!acc[key]) {
+        acc[key] = [];
+      }
+      acc[key].push({ material, series });
+    });
+    return acc;
+  }, {} as Record<string, { material: Material; series: Series }[]>);
+
   return (
-    <Table aria-label="Material List Table">
-      <TableHeader>
-        {columns.map((c) => (
-          <TableColumn key={c.key}>{c.label}</TableColumn>
-        ))}
-      </TableHeader>
-      <TableBody>
-        {rows.map((row) => (
-          <TableRow
-            key={row.key}
-            onClick={() => handleRowClick(row.key)}
-            className={selectedSeriesId === row.key ? "bg-gray-200" : ""}
-          >
-            {(columnKey) => {
-              if (
-                columnKey === "monthlyChange" ||
-                columnKey === "quarterlyChange" ||
-                columnKey === "semiAnnualChange" ||
-                columnKey === "annualChange"
-              ) {
-                const change = row[columnKey as keyof DetailedDataRow];
-                const isIncrease = typeof change === 'number' && change > 0;
-                return (
+    <>
+      <Tabs selectedKey={groupBy} onSelectionChange={(key) => setGroupBy(key as "type" | "region")}>
+        <Tab key="type" title="Group by Type" />
+        <Tab key="region" title="Group by Region" />
+      </Tabs>
+      {Object.entries(groupedMaterials).map(([group, items]) => (
+        <div key={group} className="w-full">
+          <h3 className="text-lg font-bold">{group}</h3>
+          <Table aria-label="Material List">
+            <TableHeader>
+              {columns.map((c) => (
+                <TableColumn key={c.key}>{c.label}</TableColumn>
+              ))}
+            </TableHeader>
+            <TableBody>
+              {items.map(({ material, series }) => (
+                <TableRow key={series.id} onClick={() => handleRowClick(series.id)}>
+                  <TableCell>{material.materialName}</TableCell>
+                  <TableCell>{series.seriesId}</TableCell>
+                  <TableCell>{series.lastUpdated}</TableCell>
                   <TableCell>
-                    <span style={{ color: isIncrease ? "green" : "red" }}>
-                      {typeof change === 'number' ? change.toFixed(2) : 'N/A'}%
-                      {isIncrease ? " ↑" : " ↓"}
+                    <span style={{ color: series.monthlyChange > 0 ? "green" : "red" }}>
+                      {series.monthlyChange.toFixed(2)}%
+                      {series.monthlyChange > 0 ? " ↑" : " ↓"}
                     </span>
                   </TableCell>
-                );
-              }
-              return <TableCell>{row[columnKey as keyof DetailedDataRow]}</TableCell>;
-            }}
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+                  <TableCell>
+                    <span style={{ color: series.quarterlyChange > 0 ? "green" : "red" }}>
+                      {series.quarterlyChange.toFixed(2)}%
+                      {series.quarterlyChange > 0 ? " ↑" : " ↓"}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <span style={{ color: series.semiAnnualChange > 0 ? "green" : "red" }}>
+                      {series.semiAnnualChange.toFixed(2)}%
+                      {series.semiAnnualChange > 0 ? " ↑" : " ↓"}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <span style={{ color: series.annualChange > 0 ? "green" : "red" }}>
+                      {series.annualChange.toFixed(2)}%
+                      {series.annualChange > 0 ? " ↑" : " ↓"}
+                    </span>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      ))}
+    </>
   );
 };
 

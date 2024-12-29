@@ -15,5 +15,6 @@ export interface Series {
 export interface Material {
     materialId: number;
     materialName: string;
+    materialType: string;
     series: Series[];
 }
