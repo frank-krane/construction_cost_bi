@@ -10,29 +10,29 @@ import { Switch } from "@nextui-org/switch";
 import { Tabs, Tab } from "@nextui-org/tabs";
 
 export default function Home() {
-  const [selectedMaterialId, setSelectedMaterialId] = useState<number | null>(null);
+  const [selectedSeriesId, setSelectedSeriesId] = useState<number | null>(null);
   const [selectedMaterial, setSelectedMaterial] = useState<Material | null>(null);
   const [selectedTimeSeriesData, setSelectedTimeSeriesData] = useState<TimeSeriesData | null>(null);
   const [forecastEnabled, setForecastEnabled] = useState<boolean>(false);
   const [duration, setDuration] = useState<string>("5Y");
 
   useEffect(() => {
-    if (selectedMaterialId !== null) {
-      getTimeSeriesData(selectedMaterialId, forecastEnabled, duration).then((timeSeriesData) => {
+    if (selectedSeriesId !== null) {
+      getTimeSeriesData(selectedSeriesId, forecastEnabled, duration).then((timeSeriesData) => {
         setSelectedTimeSeriesData(timeSeriesData);
       });
     }
-  }, [selectedMaterialId, forecastEnabled, duration]);
+  }, [selectedSeriesId, forecastEnabled, duration]);
 
-  const handleSelectMaterial = (materialId: number, material: Material) => {
-    setSelectedMaterialId(materialId);
+  const handleSelectMaterial = (seriesId: number, material: Material) => {
+    setSelectedSeriesId(seriesId);
     setSelectedMaterial(material);
   };
 
   const handleForecastSwitch = async (checked: boolean) => {
     setForecastEnabled(checked);
-    if (selectedMaterialId !== null) {
-      const timeSeriesData = await getTimeSeriesData(selectedMaterialId, checked, duration);
+    if (selectedSeriesId !== null) {
+      const timeSeriesData = await getTimeSeriesData(selectedSeriesId, checked, duration);
       setSelectedTimeSeriesData(timeSeriesData);
     }
   };
@@ -40,8 +40,8 @@ export default function Home() {
   const handleDurationChange = async (key: React.Key) => {
     const durationKey = key.toString();
     setDuration(durationKey);
-    if (selectedMaterialId !== null) {
-      const timeSeriesData = await getTimeSeriesData(selectedMaterialId, forecastEnabled, durationKey);
+    if (selectedSeriesId !== null) {
+      const timeSeriesData = await getTimeSeriesData(selectedSeriesId, forecastEnabled, durationKey);
       setSelectedTimeSeriesData(timeSeriesData);
     }
   };
@@ -54,7 +54,7 @@ export default function Home() {
       </section>
       <section className="flex flex-col gap-8 items-center sm:items-start">
         <h2 className="text-xl font-bold">Chart</h2>
-        {selectedMaterialId !== null && selectedMaterial && selectedTimeSeriesData && (
+        {selectedSeriesId !== null && selectedMaterial && selectedTimeSeriesData && (
           <>
             <div className="flex items-center gap-4">
               <span>Forecast</span>
@@ -72,8 +72,8 @@ export default function Home() {
               <Tab key="Max" title="Max" />
             </Tabs>
             <div>
-              <div>Selected Material ID: {selectedMaterialId}</div>
-              <div>Material Name: {selectedMaterial.name}</div>
+              <div>Selected Series ID: {selectedSeriesId}</div>
+              <div>Material Name: {selectedMaterial.materialName}</div>
               <MaterialChart timeSeriesData={selectedTimeSeriesData} />
             </div>
           </>

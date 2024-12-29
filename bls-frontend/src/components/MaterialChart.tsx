@@ -110,7 +110,7 @@ const MaterialChart: React.FC<MaterialChartProps> = ({ timeSeriesData }) => {
       chartRef.current.update();
     }
   }, [timeSeriesData]);
-  
+
 
   return <Line ref={chartRef} data={data} options={options} />;
 };

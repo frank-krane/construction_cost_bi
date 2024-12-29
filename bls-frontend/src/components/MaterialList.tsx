@@ -8,13 +8,11 @@ import {
   TableColumn,
   TableRow,
   TableCell,
-  getKeyValue,
 } from "@nextui-org/table";
-import { Material } from "../types/material";
+import { Material, Series } from "../types/material";
 import { getMaterialsDetailed } from "../services/materials";
 
 interface DetailedDataRow {
-  [key: string]: any;
   key: number;
   materialName: string;
   monthlyChange: number;
@@ -34,34 +32,37 @@ const columns: { key: string; label: string }[] = [
 ];
 
 interface MaterialListProps {
-  onSelectMaterial: (materialId: number, material: Material) => void;
+  onSelectMaterial: (seriesId: number, material: Material) => void;
 }
 
 const MaterialList: React.FC<MaterialListProps> = ({ onSelectMaterial }) => {
-  const [detailedData, setDetailedData] = useState<any[]>([]);
-  const [selectedMaterialId, setSelectedMaterialId] = useState<number | null>(null);
+  const [detailedData, setDetailedData] = useState<Material[]>([]);
+  const [selectedSeriesId, setSelectedSeriesId] = useState<number | null>(null);
 
   useEffect(() => {
     getMaterialsDetailed().then(setDetailedData).catch(console.error);
   }, []);
 
-  const handleRowClick = (materialId: number) => {
-    const material = detailedData.find((m) => m.materialId === materialId);
+  const handleRowClick = (seriesId: number) => {
+    const material = detailedData.find((m) => m.series.some((s: Series) => s.seriesId === seriesId));
     if (material) {
-      setSelectedMaterialId(materialId);
-      onSelectMaterial(materialId, material);
+      const series = material.series.find((s: Series) => s.seriesId === seriesId);
+      setSelectedSeriesId(seriesId);
+      onSelectMaterial(seriesId, material);
     }
   };
 
-  const rows: DetailedDataRow[] = detailedData.map((item) => ({
-    key: item.materialId,
-    materialName: item.materialName,
-    monthlyChange: item.monthlyChange,
-    quarterlyChange: item.quarterlyChange,
-    semiAnnualChange: item.semiAnnualChange,
-    annualChange: item.annualChange,
-    lastUpdated: item.lastUpdated,
-  }));
+  const rows: DetailedDataRow[] = detailedData.flatMap((item) =>
+    item.series.map((series: Series) => ({
+      key: series.seriesId,
+      materialName: item.materialName,
+      monthlyChange: series.monthlyChange,
+      quarterlyChange: series.quarterlyChange,
+      semiAnnualChange: series.semiAnnualChange,
+      annualChange: series.annualChange,
+      lastUpdated: series.lastUpdated,
+    }))
+  );
 
   return (
     <Table aria-label="Material List Table">
@@ -75,7 +76,7 @@ const MaterialList: React.FC<MaterialListProps> = ({ onSelectMaterial }) => {
           <TableRow
             key={row.key}
             onClick={() => handleRowClick(row.key)}
-            className={selectedMaterialId === row.key ? "bg-gray-200" : ""}
+            className={selectedSeriesId === row.key ? "bg-gray-200" : ""}
           >
             {(columnKey) => {
               if (
@@ -84,18 +85,18 @@ const MaterialList: React.FC<MaterialListProps> = ({ onSelectMaterial }) => {
                 columnKey === "semiAnnualChange" ||
                 columnKey === "annualChange"
               ) {
-                const change = row[columnKey];
-                const isIncrease = change > 0;
+                const change = row[columnKey as keyof DetailedDataRow];
+                const isIncrease = typeof change === 'number' && change > 0;
                 return (
                   <TableCell>
                     <span style={{ color: isIncrease ? "green" : "red" }}>
-                      {change.toFixed(2)}%
+                      {typeof change === 'number' ? change.toFixed(2) : 'N/A'}%
                       {isIncrease ? " ↑" : " ↓"}
                     </span>
                   </TableCell>
                 );
               }
-              return <TableCell>{row[columnKey]}</TableCell>;
+              return <TableCell>{row[columnKey as keyof DetailedDataRow]}</TableCell>;
             }}
           </TableRow>
         ))}
