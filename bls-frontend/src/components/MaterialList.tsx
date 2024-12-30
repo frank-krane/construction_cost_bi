@@ -109,7 +109,7 @@ const MaterialList: React.FC<MaterialListProps> = ({ onSelectMaterial }) => {
               ] : []),
               ...items.map(({ material, series }) => (
               <TableRow key={series.id} onClick={() => handleRowClick(series.id)}>
-                <TableCell>{groupBy === "material" && material.series.length > 1 ? `${material.materialName} - ${series.region.regionName}` : material.materialName}</TableCell>
+                <TableCell>{["material", "type"].includes(groupBy) && material.series.length > 1 ? `${material.materialName} - ${series.region.regionName}` : material.materialName}</TableCell>
                 <TableCell>{series.seriesId}</TableCell>
                 <TableCell>{series.lastUpdated}</TableCell>
                 <TableCell>
