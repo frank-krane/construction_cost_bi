@@ -39,7 +39,7 @@ interface MaterialListProps {
 
 const MaterialList: React.FC<MaterialListProps> = ({ onSelectMaterial }) => {
   const [detailedData, setDetailedData] = useState<Material[]>([]);
-  const [groupBy, setGroupBy] = useState<"type" | "region">("type");
+  const [groupBy, setGroupBy] = useState<"type" | "region" | "material">("type");
 
   useEffect(() => {
     getMaterialsDetailed().then(setDetailedData).catch(console.error);
@@ -67,7 +67,14 @@ const MaterialList: React.FC<MaterialListProps> = ({ onSelectMaterial }) => {
 
   const groupedMaterials = detailedData.reduce((acc, material) => {
     material.series.forEach((series) => {
-      const key = groupBy === "type" ? material.materialType : series.region.regionName;
+      let key;
+      if (groupBy === "type") {
+        key = material.materialType;
+      } else if (groupBy === "region") {
+        key = series.region.regionName;
+      } else {
+        key = material.materialName;
+      }
       if (!acc[key]) {
         acc[key] = [];
       }
@@ -78,9 +85,10 @@ const MaterialList: React.FC<MaterialListProps> = ({ onSelectMaterial }) => {
 
   return (
     <>
-    <Tabs selectedKey={groupBy} onSelectionChange={(key) => setGroupBy(key as "type" | "region")}>
+    <Tabs selectedKey={groupBy} onSelectionChange={(key) => setGroupBy(key as "type" | "region" | "material")}>
       <Tab key="type" title="Group by Type" />
       <Tab key="region" title="Group by Region" />
+      <Tab key="material" title="Group by Material" />
     </Tabs><Table aria-label="Material List">
         <TableHeader>
           {columns.map((c) => (
@@ -88,48 +96,50 @@ const MaterialList: React.FC<MaterialListProps> = ({ onSelectMaterial }) => {
           ))}
         </TableHeader>
         <TableBody>
-          {Object.entries(groupedMaterials).flatMap(([group, items]) => [
-            <TableRow
-              key={`${group}-header`} className="bg-gray-100 text-gray-600 rounded"
-            >
-              {columns.map((col, idx) => (
+            {Object.entries(groupedMaterials).flatMap(([group, items]) => {
+            return [
+              ...(groupBy !== "material" || items.length > 1? [
+              <TableRow key={`${group}-header`} className="bg-gray-100 text-gray-600 rounded">
+                {columns.map((col, idx) => (
                 <TableCell key={col.key} className="font-bold text-xs">
                   {idx === 0 ? group : ""}
                 </TableCell>
-              ))}
-            </TableRow>,
-            ...items.map(({ material, series }) => (
+                ))}
+              </TableRow>
+              ] : []),
+              ...items.map(({ material, series }) => (
               <TableRow key={series.id} onClick={() => handleRowClick(series.id)}>
-                <TableCell>{material.materialName}</TableCell>
+                <TableCell>{groupBy === "material" && material.series.length > 1 ? `${material.materialName} - ${series.region.regionName}` : material.materialName}</TableCell>
                 <TableCell>{series.seriesId}</TableCell>
                 <TableCell>{series.lastUpdated}</TableCell>
                 <TableCell>
-                  <span style={{ color: series.monthlyChange > 0 ? "green" : "red" }}>
-                    {series.monthlyChange.toFixed(2)}%
-                    {series.monthlyChange > 0 ? " ↑" : " ↓"}
-                  </span>
+                <span style={{ color: series.monthlyChange > 0 ? "green" : "red" }}>
+                  {series.monthlyChange.toFixed(2)}%
+                  {series.monthlyChange > 0 ? " ↑" : " ↓"}
+                </span>
                 </TableCell>
                 <TableCell>
-                  <span style={{ color: series.quarterlyChange > 0 ? "green" : "red" }}>
-                    {series.quarterlyChange.toFixed(2)}%
-                    {series.quarterlyChange > 0 ? " ↑" : " ↓"}
-                  </span>
+                <span style={{ color: series.quarterlyChange > 0 ? "green" : "red" }}>
+                  {series.quarterlyChange.toFixed(2)}%
+                  {series.quarterlyChange > 0 ? " ↑" : " ↓"}
+                </span>
                 </TableCell>
                 <TableCell>
-                  <span style={{ color: series.semiAnnualChange > 0 ? "green" : "red" }}>
-                    {series.semiAnnualChange.toFixed(2)}%
-                    {series.semiAnnualChange > 0 ? " ↑" : " ↓"}
-                  </span>
+                <span style={{ color: series.semiAnnualChange > 0 ? "green" : "red" }}>
+                  {series.semiAnnualChange.toFixed(2)}%
+                  {series.semiAnnualChange > 0 ? " ↑" : " ↓"}
+                </span>
                 </TableCell>
                 <TableCell>
-                  <span style={{ color: series.annualChange > 0 ? "green" : "red" }}>
-                    {series.annualChange.toFixed(2)}%
-                    {series.annualChange > 0 ? " ↑" : " ↓"}
-                  </span>
+                <span style={{ color: series.annualChange > 0 ? "green" : "red" }}>
+                  {series.annualChange.toFixed(2)}%
+                  {series.annualChange > 0 ? " ↑" : " ↓"}
+                </span>
                 </TableCell>
               </TableRow>
-            )),
-          ])}
+              )),
+            ];
+            })}
         </TableBody>
       </Table>
       </>
