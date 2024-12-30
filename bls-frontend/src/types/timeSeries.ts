@@ -18,3 +18,7 @@ export interface TimeSeriesData {
     existing_data: ExistingData[];
     forecasted_data: ForecastedData[];
 }
+
+export interface TimeSeriesDataResponse {
+    [seriesId: string]: TimeSeriesData;
+}
