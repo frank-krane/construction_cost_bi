@@ -83,13 +83,51 @@ const MaterialList: React.FC<MaterialListProps> = ({ onSelectMaterial }) => {
     return acc;
   }, {} as Record<string, { material: Material; series: Series }[]>);
 
+  const [selectedKeys, setSelectedKeys] = React.useState<string[]>([]);
+  const [prevSelection, setPrevSelection] = React.useState<Set<string>>(new Set());
+
+  const handleSelectionChange = (keys: Set<string> | string[]) => {
+    const oldKeys = new Set(prevSelection);
+    const newKeys = new Set(Array.isArray(keys) ? keys : [...keys]);
+
+    // Step 1: Detect header toggles
+    Object.entries(groupedMaterials).forEach(([group, items]) => {
+      const header = `${group}-header`;
+      const itemIds = items.map(({ series }) => series.id.toString());
+
+      // Header was just toggled on: select all group items
+      if (!oldKeys.has(header) && newKeys.has(header)) {
+        itemIds.forEach((id) => newKeys.add(id));
+      }
+      // Header was just toggled off: unselect all group items
+      if (oldKeys.has(header) && !newKeys.has(header)) {
+        itemIds.forEach((id) => newKeys.delete(id));
+      }
+    });
+
+    // Step 2: If all items in a group are now selected, ensure the header is selected; else unselect it
+    Object.entries(groupedMaterials).forEach(([group, items]) => {
+      const header = `${group}-header`;
+      const itemIds = items.map(({ series }) => series.id.toString());
+      const allSelected = itemIds.every((id) => newKeys.has(id));
+      if (allSelected) newKeys.add(header);
+      else newKeys.delete(header);
+    });
+
+    setSelectedKeys(Array.from(newKeys));
+    setPrevSelection(newKeys);
+  };
+
   return (
     <>
+    <div>
     <Tabs selectedKey={groupBy} onSelectionChange={(key) => setGroupBy(key as "type" | "region" | "material")}>
       <Tab key="type" title="Group by Type" />
       <Tab key="region" title="Group by Region" />
       <Tab key="material" title="Group by Material" />
-    </Tabs><Table aria-label="Material List">
+    </Tabs>
+    </div>
+    <Table aria-label="Material List" selectedKeys={selectedKeys} selectionMode="multiple" onSelectionChange={handleSelectionChange}>
         <TableHeader>
           {columns.map((c) => (
             <TableColumn key={c.key}>{c.label}</TableColumn>
