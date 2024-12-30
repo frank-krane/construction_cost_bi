@@ -86,26 +86,57 @@ const MaterialList: React.FC<MaterialListProps> = ({ onSelectMaterial }) => {
   const [selectedKeys, setSelectedKeys] = React.useState<string[]>([]);
   const [prevSelection, setPrevSelection] = React.useState<Set<string>>(new Set());
 
-  const handleSelectionChange = (keys: Set<string> | string[]) => {
+  const handleSelectionChange = (keys: Set<string> | string[] | string) => {
+    console.log(keys);
+    if (typeof keys === "string") {
+      keys = [keys];
+    }
     const oldKeys = new Set(prevSelection);
     const newKeys = new Set(Array.isArray(keys) ? keys : [...keys]);
 
-    // Step 1: Detect header toggles
+    // Handle 'all' key toggle
+    const wasAllSelected = oldKeys.has('all');
+    const isAllSelected = newKeys.has('all');
+
+    if (!wasAllSelected && isAllSelected) {
+      // 'all' was toggled to select all
+      console.log("Table header checkbox selected (Select All).");
+      rows.forEach(row => newKeys.add(row.key.toString()));
+      // Add all group header keys
+      Object.keys(groupedMaterials).forEach(group => newKeys.add(`${group}-header`));
+    } else if (wasAllSelected && !isAllSelected) {
+      // 'all' was toggled to deselect all
+      console.log("Table header checkbox deselected (Deselect All).");
+      rows.forEach(row => newKeys.delete(row.key.toString()));
+      // Remove all group header keys
+      Object.keys(groupedMaterials).forEach(group => newKeys.delete(`${group}-header`));
+    }
+
+    // Skip group header logic if 'all' was toggled
+    if ((!wasAllSelected && isAllSelected) || (wasAllSelected && !isAllSelected)) {
+      setSelectedKeys(Array.from(newKeys));
+      setPrevSelection(newKeys);
+      return;
+    }
+
+    // Step 1: Detect group header toggles
     Object.entries(groupedMaterials).forEach(([group, items]) => {
       const header = `${group}-header`;
       const itemIds = items.map(({ series }) => series.id.toString());
 
       // Header was just toggled on: select all group items
       if (!oldKeys.has(header) && newKeys.has(header)) {
+        console.log(`Header '${group}' selected.`);
         itemIds.forEach((id) => newKeys.add(id));
       }
       // Header was just toggled off: unselect all group items
       if (oldKeys.has(header) && !newKeys.has(header)) {
+        console.log(`Header '${group}' deselected.`);
         itemIds.forEach((id) => newKeys.delete(id));
       }
     });
 
-    // Step 2: If all items in a group are now selected, ensure the header is selected; else unselect it
+    // Step 2: If all items in a group are now selected, ensure the group header is selected; else unselect it
     Object.entries(groupedMaterials).forEach(([group, items]) => {
       const header = `${group}-header`;
       const itemIds = items.map(({ series }) => series.id.toString());
@@ -113,6 +144,13 @@ const MaterialList: React.FC<MaterialListProps> = ({ onSelectMaterial }) => {
       if (allSelected) newKeys.add(header);
       else newKeys.delete(header);
     });
+
+    const allItemKeys = rows.map(row => row.key.toString());
+    const currentlyAllSelected = allItemKeys.every(key => newKeys.has(key));
+    if (!currentlyAllSelected && newKeys.has('all')) {
+      console.log("'all' key removed as not all items are selected.");
+      newKeys.delete('all');
+    }
 
     setSelectedKeys(Array.from(newKeys));
     setPrevSelection(newKeys);
@@ -127,8 +165,8 @@ const MaterialList: React.FC<MaterialListProps> = ({ onSelectMaterial }) => {
       <Tab key="material" title="Group by Material" />
     </Tabs>
     </div>
-    <Table aria-label="Material List" selectedKeys={selectedKeys} selectionMode="multiple" onSelectionChange={handleSelectionChange}>
-        <TableHeader>
+    <Table aria-label="Material List" selectedKeys={selectedKeys} selectionMode="multiple" onSelectionChange={handleSelectionChange} isHeaderSticky={true}>
+        <TableHeader aria-disabled={true}>
           {columns.map((c) => (
             <TableColumn key={c.key}>{c.label}</TableColumn>
           ))}
@@ -175,6 +213,7 @@ const MaterialList: React.FC<MaterialListProps> = ({ onSelectMaterial }) => {
                 </span>
                 </TableCell>
               </TableRow>
+
               )),
             ];
             })}
