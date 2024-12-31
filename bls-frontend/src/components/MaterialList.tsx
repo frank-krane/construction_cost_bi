@@ -41,6 +41,11 @@ interface MaterialListProps {
 const MaterialList: React.FC<MaterialListProps> = ({ selectedKeys, setSelectedKeys }) => {
   const [detailedData, setDetailedData] = useState<Material[]>([]);
   const [groupBy, setGroupBy] = useState<"type" | "region" | "material">("type");
+  const [localSelection, setLocalSelection] = useState<Set<string>>(new Set(selectedKeys));
+
+  useEffect(() => {
+    setLocalSelection(new Set(selectedKeys));
+  }, [selectedKeys]);
 
   useEffect(() => {
     getMaterialsDetailed().then(setDetailedData).catch(console.error);
@@ -76,18 +81,72 @@ const MaterialList: React.FC<MaterialListProps> = ({ selectedKeys, setSelectedKe
     return acc;
   }, {} as Record<string, { material: Material; series: Series }[]>);
 
-  const handleSelectionChange = (keys: Set<string> | string[] | string) => {
-    let newKeys: Set<string>;
-    if (typeof keys === "string") {
-      newKeys = new Set([keys]);
-    } else {
-      newKeys = new Set(Array.isArray(keys) ? keys : [...keys]);
+  const allNumericKeys = Object.values(groupedMaterials).flatMap(items =>
+    items.map(({ series }) => series.id.toString())
+  );
+
+  const handleSelectionChange = (keysFromNextUi: Set<string> | string[] | string) => {
+    let newSelection = new Set<string>(
+      Array.isArray(keysFromNextUi)
+        ? keysFromNextUi
+        : typeof keysFromNextUi === "string"
+        ? [keysFromNextUi]
+        : keysFromNextUi
+    );
+
+    const isAllNow = newSelection.has("all");
+    const wasAllBefore = localSelection.has("all");
+
+    if (isAllNow && !wasAllBefore) {
+      newSelection = new Set(["all", ...allNumericKeys]);
+      for (const [group, items] of Object.entries(groupedMaterials)) {
+        const groupKeys = items.map(({ series }) => series.id.toString());
+        if (groupKeys.every(k => newSelection.has(k))) {
+          newSelection.add(group);
+        }
+      }
+
+      setLocalSelection(newSelection);
+      setSelectedKeys([...newSelection]);
+      return;
+    } else if (!isAllNow && wasAllBefore) {
+      newSelection.clear();
+
+      setLocalSelection(newSelection);
+      setSelectedKeys([...newSelection]);
+      return;
     }
 
-    // Remove non-numeric keys (group headers and 'all')
-    const numericSeriesIds = Array.from(newKeys).filter(key => /^\d+$/.test(key));
+    for (const [group, items] of Object.entries(groupedMaterials)) {
+      const groupKeys = items.map(({ series }) => series.id.toString());
+      const isGroupSelected = newSelection.has(group);
+      const wasGroupSelected = localSelection.has(group);
+      if (isGroupSelected && !wasGroupSelected) {
+        groupKeys.forEach(k => newSelection.add(k));
+      } else if (!isGroupSelected && wasGroupSelected) {
+        groupKeys.forEach(k => newSelection.delete(k));
+      }
+    }
 
-    setSelectedKeys(numericSeriesIds);
+    for (const [group, items] of Object.entries(groupedMaterials)) {
+      const groupKeys = items.map(({ series }) => series.id.toString());
+      const allInGroup = groupKeys.every(k => newSelection.has(k));
+      if (allInGroup) {
+        newSelection.add(group);
+      } else {
+        newSelection.delete(group);
+      }
+    }
+
+    const everythingSelected = allNumericKeys.every(k => newSelection.has(k));
+    if (everythingSelected) {
+      newSelection.add("all");
+    } else {
+      newSelection.delete("all");
+    }
+
+    setLocalSelection(newSelection);
+    setSelectedKeys(Array.from(newSelection));
   };
 
   return (
@@ -101,7 +160,7 @@ const MaterialList: React.FC<MaterialListProps> = ({ selectedKeys, setSelectedKe
       </div>
       <Table
         aria-label="Material List"
-        selectedKeys={new Set(selectedKeys)}
+        selectedKeys={localSelection}
         selectionMode="multiple"
         onSelectionChange={handleSelectionChange}
         isHeaderSticky={true}
@@ -115,7 +174,11 @@ const MaterialList: React.FC<MaterialListProps> = ({ selectedKeys, setSelectedKe
           {Object.entries(groupedMaterials).flatMap(([group, items]) => {
             return [
               ...(groupBy !== "material" || items.length > 1 ? [
-                <TableRow key={`${group}-header`} className="bg-gray-100 text-gray-600 rounded">
+                <TableRow
+                  key={group}
+                  isSelectable
+                  className="bg-gray-100 text-gray-600 rounded"
+                >
                   {columns.map((col, idx) => (
                     <TableCell key={col.key} className="font-bold text-xs">
                       {idx === 0 ? group : ""}

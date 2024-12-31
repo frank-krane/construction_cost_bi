@@ -10,18 +10,21 @@ import { Switch } from "@nextui-org/switch";
 import { Tabs, Tab } from "@nextui-org/tabs";
 
 export default function Home() {
-  const [selectedSeriesIds, setSelectedSeriesIds] = useState<number[]>([]);
+  const [selectedSeriesIds, setSelectedSeriesIds] = useState<string[]>([]);
   const [selectedTimeSeriesData, setSelectedTimeSeriesData] = useState<TimeSeriesDataResponse | null>(null);
   const [forecastEnabled, setForecastEnabled] = useState<boolean>(false);
   const [duration, setDuration] = useState<string>("5Y");
 
   useEffect(() => {
-    if (selectedSeriesIds.length === 0) {
+    const numericIds = selectedSeriesIds
+      .filter(k => /^\d+$/.test(k))
+      .map(k => parseInt(k, 10));
+    if (numericIds.length === 0) {
       setSelectedTimeSeriesData(null);
       return;
     }
 
-    getTimeSeriesData(selectedSeriesIds, forecastEnabled, duration)
+    getTimeSeriesData(numericIds, forecastEnabled, duration)
       .then((timeSeriesMap) => {
         setSelectedTimeSeriesData(timeSeriesMap);
       })
@@ -42,13 +45,8 @@ export default function Home() {
       <section className="flex flex-col gap-8 items-center sm:items-start w-full">
         <h2 className="text-xl font-bold">Material List</h2>
         <MaterialList
-          selectedKeys={selectedSeriesIds.map(id => id.toString())}
-          setSelectedKeys={(keys: string[]) => {
-            const numericIds = keys
-              .map(id => parseInt(id, 10))
-              .filter(id => !isNaN(id));
-            setSelectedSeriesIds(numericIds);
-          }}
+          selectedKeys={selectedSeriesIds}
+          setSelectedKeys={(keys: string[]) => setSelectedSeriesIds(keys)}
         />
       </section>
       <section className="flex flex-col gap-8 items-center sm:items-start w-full">
