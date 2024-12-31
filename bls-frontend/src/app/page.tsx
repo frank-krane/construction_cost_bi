@@ -1,60 +1,59 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import MaterialList from "../components/MaterialList";
+import MaterialList from "@/components/MaterialList";
 import { Material } from "@/types/material";
-import { TimeSeriesData } from "@/types/timeSeries";
+import { TimeSeriesData, TimeSeriesDataResponse } from "@/types/timeSeries";
 import MaterialChart from "../components/MaterialChart";
 import { getTimeSeriesData } from "../services/timeSeries";
 import { Switch } from "@nextui-org/switch";
 import { Tabs, Tab } from "@nextui-org/tabs";
 
 export default function Home() {
-  const [selectedSeriesId, setSelectedSeriesId] = useState<number | null>(null);
-  const [selectedMaterial, setSelectedMaterial] = useState<Material | null>(null);
-  const [selectedTimeSeriesData, setSelectedTimeSeriesData] = useState<TimeSeriesData | null>(null);
+  const [selectedSeriesIds, setSelectedSeriesIds] = useState<number[]>([]);
+  const [selectedTimeSeriesData, setSelectedTimeSeriesData] = useState<TimeSeriesDataResponse | null>(null);
   const [forecastEnabled, setForecastEnabled] = useState<boolean>(false);
   const [duration, setDuration] = useState<string>("5Y");
 
   useEffect(() => {
-    if (selectedSeriesId !== null) {
-      getTimeSeriesData(selectedSeriesId, forecastEnabled, duration).then((timeSeriesData) => {
-        setSelectedTimeSeriesData(timeSeriesData);
-      });
+    if (selectedSeriesIds.length === 0) {
+      setSelectedTimeSeriesData(null);
+      return;
     }
-  }, [selectedSeriesId, forecastEnabled, duration]);
 
-  const handleSelectMaterial = (seriesId: number, material: Material) => {
-    setSelectedSeriesId(seriesId);
-    setSelectedMaterial(material);
-  };
+    getTimeSeriesData(selectedSeriesIds, forecastEnabled, duration)
+      .then((timeSeriesMap) => {
+        setSelectedTimeSeriesData(timeSeriesMap);
+      })
+      .catch(console.error);
+  }, [selectedSeriesIds, forecastEnabled, duration]);
 
   const handleForecastSwitch = async (checked: boolean) => {
     setForecastEnabled(checked);
-    if (selectedSeriesId !== null) {
-      const timeSeriesData = await getTimeSeriesData(selectedSeriesId, checked, duration);
-      setSelectedTimeSeriesData(timeSeriesData);
-    }
   };
 
   const handleDurationChange = async (key: React.Key) => {
     const durationKey = key.toString();
     setDuration(durationKey);
-    if (selectedSeriesId !== null) {
-      const timeSeriesData = await getTimeSeriesData(selectedSeriesId, forecastEnabled, durationKey);
-      setSelectedTimeSeriesData(timeSeriesData);
-    }
   };
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
       <section className="flex flex-col gap-8 items-center sm:items-start w-full">
         <h2 className="text-xl font-bold">Material List</h2>
-        <MaterialList onSelectMaterial={handleSelectMaterial} />
+        <MaterialList
+          selectedKeys={selectedSeriesIds.map(id => id.toString())}
+          setSelectedKeys={(keys: string[]) => {
+            const numericIds = keys
+              .map(id => parseInt(id, 10))
+              .filter(id => !isNaN(id));
+            setSelectedSeriesIds(numericIds);
+          }}
+        />
       </section>
       <section className="flex flex-col gap-8 items-center sm:items-start w-full">
         <h2 className="text-xl font-bold">Chart</h2>
-        {selectedSeriesId !== null && selectedMaterial && selectedTimeSeriesData && (
+        {selectedSeriesIds.length > 0 && selectedTimeSeriesData && (
           <>
             <div className="flex items-center gap-4">
               <span>Forecast</span>
@@ -71,10 +70,8 @@ export default function Home() {
               <Tab key="10Y" title="10 Years" />
               <Tab key="Max" title="Max" />
             </Tabs>
-            <div>
-              <div>Selected Series ID: {selectedSeriesId}</div>
-              <div>Material Name: {selectedMaterial.materialName}</div>
-              <MaterialChart timeSeriesData={selectedTimeSeriesData} />
+            <div style={{ width: '100%', height: '400px' }}> {/* Set a fixed height or use responsive units */}
+              <MaterialChart timeSeriesMap={selectedTimeSeriesData} />
             </div>
           </>
         )}
