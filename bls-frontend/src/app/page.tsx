@@ -2,8 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import MaterialList from "@/components/MaterialList";
-import { Material } from "@/types/material";
-import { TimeSeriesData, TimeSeriesDataResponse } from "@/types/timeSeries";
+import { TimeSeriesDataResponse } from "@/types/timeSeries";
 import MaterialChart from "../components/MaterialChart";
 import { getTimeSeriesData } from "../services/timeSeries";
 import { Switch } from "@nextui-org/switch";
@@ -16,6 +15,7 @@ export default function Home() {
   const [duration, setDuration] = useState<string>("5Y");
 
   useEffect(() => {
+    // TODO: Add this logic to utils function
     const numericIds = selectedSeriesIds
       .filter(k => /^\d+$/.test(k))
       .map(k => parseInt(k, 10));

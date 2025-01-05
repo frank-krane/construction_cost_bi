@@ -176,7 +176,7 @@ const MaterialList: React.FC<MaterialListProps> = ({ selectedKeys, setSelectedKe
               ...(groupBy !== "material" || items.length > 1 ? [
                 <TableRow
                   key={group}
-                  isSelectable
+                  
                   className="bg-gray-100 text-gray-600 rounded"
                 >
                   {columns.map((col, idx) => (

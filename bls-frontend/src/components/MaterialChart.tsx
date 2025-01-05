@@ -188,9 +188,7 @@ const MaterialChart: React.FC<MaterialChartProps> = ({ timeSeriesMap }) => {
   }, [timeSeriesMap]);
 
   return (
-    <div style={{ width: '100%', height: '100%' }}> {/* Added container with 100% width and height */}
       <Line ref={chartRef} data={data} options={options} />
-    </div>
   );
 };
 

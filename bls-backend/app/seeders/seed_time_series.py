@@ -3,6 +3,7 @@ from app.models.series import Series
 from app.models.time_series_data import TimeSeriesData
 from app.utils.bls_api import fetch_bls_data_in_chunks, find_start_year
 from datetime import datetime
+from app.seeders.seed_forecast import seed_forecast
 
 def seed_time_series(force_seed=False):
     if not force_seed and TimeSeriesData.query.first():
@@ -46,6 +47,7 @@ def seed_time_series(force_seed=False):
                 )
                 db.session.add(time_series_entry)
     db.session.commit()
+    seed_forecast()
 
 def get_month_from_period(period):
     if period.startswith("M"):

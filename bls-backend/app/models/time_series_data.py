@@ -9,4 +9,6 @@ class TimeSeriesData(db.Model):
     period = db.Column(db.String(500))
     value = db.Column(db.Float)
     ispredicted = db.Column(db.Boolean)
+    yhat_lower = db.Column(db.Float)
+    yhat_upper = db.Column(db.Float)
     series = db.relationship('Series', back_populates='time_series_data')
