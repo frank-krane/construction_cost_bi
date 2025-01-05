@@ -1,6 +1,9 @@
+import "./globals.css";
+import * as React from "react";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
+
+import { NextUIProvider } from "@nextui-org/system";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -24,8 +27,15 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        {children}
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+      >
+        <NextUIProvider>
+          <div className="h-screen flex flex-col">
+            {/* <header>Header</header> */}
+            {children}
+          </div>
+        </NextUIProvider>
       </body>
     </html>
   );
