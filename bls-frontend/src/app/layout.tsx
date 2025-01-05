@@ -31,10 +31,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <NextUIProvider>
-          <div className="h-screen flex flex-col">
-            {/* <header>Header</header> */}
-            {children}
-          </div>
+          <div className="h-screen flex flex-col">{children}</div>
         </NextUIProvider>
       </body>
     </html>

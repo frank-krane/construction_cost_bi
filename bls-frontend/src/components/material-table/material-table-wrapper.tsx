@@ -4,7 +4,9 @@ import MaterialTableTabs from "./material-table-tabs";
 export default function MaterialTableWrapper() {
   return (
     <div className="flex flex-col max-h-full">
-      <MaterialTableTabs />
+      <div className="p-1">
+        <MaterialTableTabs />
+      </div>
       <MaterialTable />
     </div>
   );

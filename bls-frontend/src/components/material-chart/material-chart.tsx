@@ -151,7 +151,7 @@ export default function MaterialChart() {
   );
 
   if (loadedSeries.length === 0) {
-    return <div>No chart data selected.</div>;
+    return <div className="text-center mt-60">No chart data selected.</div>;
   }
 
   const chartDataObj = { labels, datasets };
@@ -177,7 +177,7 @@ export default function MaterialChart() {
   };
 
   return (
-    <div style={{ width: "100%", height: "400px" }}>
+    <div className="w-full h-[250px]">
       <Line data={chartDataObj} options={options} />
       <div style={{ marginTop: "1rem" }}>
         <ReactLegend datasets={chartDataObj.datasets} />
@@ -186,7 +186,6 @@ export default function MaterialChart() {
   );
 }
 
-// ----------------------------------------------------
 function buildChartConfig(
   loadedSeries: { id: number; data?: TimeSeriesData }[],
   materialData: MaterialDetail[]
@@ -312,7 +311,7 @@ function buildChartConfig(
 
 function ReactLegend({ datasets }: { datasets: any[] }) {
   return (
-    <div style={{ maxHeight: "200px", overflowY: "auto" }}>
+    <div className="max-h-52 overflow-y-auto mb-auto">
       <ul
         style={{
           display: "grid",
@@ -338,8 +337,8 @@ function ReactLegend({ datasets }: { datasets: any[] }) {
                 style={{
                   background: item.borderColor,
                   display: "inline-block",
-                  width: "20px",
-                  height: "20px",
+                  minWidth: "20px",
+                  minHeight: "20px",
                   marginRight: "10px",
                 }}
               />

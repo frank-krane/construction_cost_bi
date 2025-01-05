@@ -5,9 +5,15 @@ import MaterialChartToggle from "./material-chart-toggle";
 export default function MaterialChartWrapper() {
   return (
     <div>
-      <MaterialChartToggle />
-      <MaterialChartTabs />
-      <MaterialChart />
+      <div className="p-1">
+        <MaterialChartTabs />
+      </div>
+      <div className="flex justify-end p-4">
+        <MaterialChartToggle />
+      </div>
+      <div>
+        <MaterialChart />
+      </div>
     </div>
   );
 }

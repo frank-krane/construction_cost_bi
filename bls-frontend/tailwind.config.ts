@@ -16,5 +16,19 @@ export default {
       },
     },
   },
-  plugins: [nextui()],
+  plugins: [
+    nextui(),
+    function ({ addBase }: { addBase: (base: Record<string, any>) => void }) {
+      addBase({
+        '::-webkit-scrollbar': {
+          width: '6px',
+          height: '6px',
+        },
+        '::-webkit-scrollbar-thumb': {
+          backgroundColor: 'rgba(100, 100, 100, 0.5)',
+          borderRadius: '3px',
+        },
+      });
+    },
+  ],
 } satisfies Config;
