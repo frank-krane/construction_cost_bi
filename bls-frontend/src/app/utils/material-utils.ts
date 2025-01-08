@@ -56,79 +56,6 @@ export const groupMaterialData = (
 };
 
 
-export function handleSelectionChange(
-    keysFromNextUi: Set<string> | string[] | string,
-    currentSelection: Set<string>,
-    allNumericKeys: string[],
-    groupedData: Record<string, string[]>, // group -> array of row keys
-) {
-    let newSelection = new Set<string>(
-        Array.isArray(keysFromNextUi)
-            ? keysFromNextUi
-            : typeof keysFromNextUi === "string"
-                ? [keysFromNextUi]
-                : keysFromNextUi
-    );
-
-    // 1) Check if user just selected "all"
-    const isAllNow = newSelection.has("all");
-    const wasAllBefore = currentSelection.has("all");
-
-    if (isAllNow && !wasAllBefore) {
-        // The user is selecting all
-        newSelection = new Set(["all", ...allNumericKeys]);
-        // Also check if entire groups are selected
-        for (const groupKey in groupedData) {
-            const groupKeys = groupedData[groupKey];
-            if (groupKeys.every((k) => newSelection.has(k))) {
-                newSelection.add(groupKey);
-            }
-        }
-        return newSelection;
-    } else if (!isAllNow && wasAllBefore) {
-        // The user just un-selected "all"
-        newSelection.clear();
-        return newSelection;
-    }
-
-    // 2) Group toggles
-    for (const groupKey in groupedData) {
-        const groupKeys = groupedData[groupKey];
-        const isGroupSelected = newSelection.has(groupKey);
-        const wasGroupSelected = currentSelection.has(groupKey);
-
-        // If the user just selected a group
-        if (isGroupSelected && !wasGroupSelected) {
-            groupKeys.forEach((k) => newSelection.add(k));
-        }
-        // If user un-selected a group
-        if (!isGroupSelected && wasGroupSelected) {
-            groupKeys.forEach((k) => newSelection.delete(k));
-        }
-    }
-
-    // 3) If all rows in a group are selected, mark the group as selected
-    for (const groupKey in groupedData) {
-        const groupKeys = groupedData[groupKey];
-        const allInGroup = groupKeys.every((k) => newSelection.has(k));
-        if (allInGroup) {
-            newSelection.add(groupKey);
-        } else {
-            newSelection.delete(groupKey);
-        }
-    }
-
-    // 4) Check if absolutely everything is selected
-    const everythingSelected = allNumericKeys.every((k) => newSelection.has(k));
-    if (everythingSelected) {
-        newSelection.add("all");
-    } else {
-        newSelection.delete("all");
-    }
-
-    return newSelection;
-}
-
 export function debounce<T extends (...args: any[]) => any>(
     fn: T,
     delayMs: number
@@ -144,4 +71,59 @@ export function debounce<T extends (...args: any[]) => any>(
             timer = null;
         }, delayMs);
     };
+}
+
+export function handleSelectionChange(
+    key: string,
+    currentSelection: Set<string>,
+    totalSelected?: number
+): Set<string> {
+    const newSelection = new Set(currentSelection);
+
+    if (newSelection.has(key)) {
+        newSelection.delete(key);
+        return newSelection;
+    }
+
+    if ((totalSelected ?? newSelection.size) >= 5) {
+        return newSelection;
+    }
+
+    newSelection.add(key);
+    return newSelection;
+}
+
+export function handleToggleGroup(
+    currentSelection: Set<string>,
+    rowKeys: string[]
+): Set<string> {
+    const newSet = new Set(currentSelection);
+
+    if (rowKeys.length > 5) {
+        return newSet;
+    }
+
+    const allSelected = rowKeys.every((rk) => newSet.has(rk));
+
+    if (allSelected) {
+        rowKeys.forEach((rk) => {
+            newSet.delete(rk);
+        });
+    } else {
+        for (const rk of rowKeys) {
+            if (newSet.size < 5) {
+                newSet.add(rk);
+            } else {
+                break;
+            }
+        }
+    }
+    return newSet;
+}
+
+export function handleToggleRow(
+    rowKey: string,
+    currentSelection: Set<string>
+): Set<string> {
+    return handleSelectionChange(rowKey, currentSelection, currentSelection.size);
 }

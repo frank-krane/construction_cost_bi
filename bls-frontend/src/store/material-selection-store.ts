@@ -1,28 +1,37 @@
-import { handleSelectionChange } from '@/app/utils/material-utils';
-import { create } from 'zustand';
+"use client";
+
+import { create } from "zustand";
+import {
+    handleToggleGroup,
+    handleToggleRow,
+} from "@/app/utils/material-utils";
 
 interface MaterialSelectionState {
     selectedKeys: Set<string>;
     setSelection: (keys: Set<string>) => void;
     clearSelection: () => void;
-    updateSelection: (
-        keysFromNextUi: Set<string> | string[] | string,
-        allNumericKeys: string[],
-        groupedData: Record<string, string[]>
-    ) => void;
+    toggleGroup: (groupKey: string, rowKeys: string[]) => void;
+    toggleRow: (rowKey: string) => void;
 }
 
-export const useMaterialSelectionStore = create<MaterialSelectionState>()((set) => ({
-    selectedKeys: new Set(),
-    setSelection: (keys: Set<string>) => set({ selectedKeys: keys }),
-    clearSelection: () => set({ selectedKeys: new Set() }),
-    updateSelection: (keys, allNumericKeys, groupedData) =>
-        set((state) => ({
-            selectedKeys: handleSelectionChange(
-                keys,
-                state.selectedKeys,
-                allNumericKeys,
-                groupedData
-            ),
-        })),
-}));
+export const useMaterialSelectionStore = create<MaterialSelectionState>()(
+    (set, get) => ({
+        selectedKeys: new Set(),
+
+        setSelection: (keys: Set<string>) => set({ selectedKeys: keys }),
+
+        clearSelection: () => set({ selectedKeys: new Set() }),
+
+        toggleGroup: (_groupKey: string, rowKeys: string[]) => {
+            const current = get().selectedKeys;
+            const newSelection = handleToggleGroup(current, rowKeys);
+            set({ selectedKeys: newSelection });
+        },
+
+        toggleRow: (rowKey: string) => {
+            const current = get().selectedKeys;
+            const newSelection = handleToggleRow(rowKey, current);
+            set({ selectedKeys: newSelection });
+        },
+    })
+);

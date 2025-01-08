@@ -1,41 +1,50 @@
 "use client";
 
+import React, { useEffect, useState } from "react";
+import {
+  Table,
+  TableHeader,
+  TableColumn,
+  TableBody,
+  TableRow,
+  TableCell,
+} from "@nextui-org/table";
+
 import {
   MaterialTableColumns,
   MaterialTypeMapping,
 } from "@/app/constants/data";
 import {
-  getKeyValue,
-  Table,
-  TableBody,
-  TableCell,
-  TableColumn,
-  TableHeader,
-  TableRow,
-} from "@nextui-org/table";
-import { useState, useEffect } from "react";
-import { MaterialDataRow, MaterialTableGroupBy } from "@/app/constants/types";
-import { fetchMaterialsDetails } from "@/services/material-service";
-import {
   convertMaterialDetailsToDataRows,
   groupMaterialData,
 } from "@/app/utils/material-utils";
-import { useGroupByStore } from "@/store/material-group-by-store";
-import React from "react";
+import { fetchMaterialsDetails } from "@/services/material-service";
+import { MaterialDataRow, MaterialTableGroupBy } from "@/app/constants/types";
 import { useMaterialSelectionStore } from "@/store/material-selection-store";
+import { useGroupByStore } from "@/store/material-group-by-store";
 import { useMaterialTableStore } from "@/store/material-table-store";
 
-export default function MaterialTable() {
-  const [isError, setIsError] = useState<boolean>(false);
-  const [errorMessage, setErrorMessage] = useState<string>("");
-  const [materialRowData, setMaterialRowData] = useState<MaterialDataRow[]>([]);
-  const [isMaterialDataLoading, setIsMaterialDataLoading] =
-    useState<boolean>(false);
+import MaterialTableCheckbox from "./material-table-checkbox";
 
-  const groupBy = useGroupByStore((state) => state.groupBy);
+type DisplayItem = {
+  isGroupHeader: boolean;
+  groupKey?: string;
+  rowData?: MaterialDataRow;
+  rowKeys?: string[]; // needed if it's a group header
+  displayGroup?: string; // label for the group
+};
+
+export default function MaterialTable() {
+  const [isError, setIsError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [materialRowData, setMaterialRowData] = useState<MaterialDataRow[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const groupBy = useGroupByStore((s) => s.groupBy);
+  const { selectedKeys } = useMaterialSelectionStore();
 
   const handleFetch = async () => {
-    setIsMaterialDataLoading(true);
+    setIsLoading(true);
     setIsError(false);
     try {
       const result = await fetchMaterialsDetails();
@@ -49,7 +58,7 @@ export default function MaterialTable() {
       }
       setIsError(true);
     } finally {
-      setIsMaterialDataLoading(false);
+      setIsLoading(false);
     }
   };
 
@@ -57,132 +66,154 @@ export default function MaterialTable() {
     handleFetch();
   }, []);
 
+  // Group the data
   const groupedData = groupMaterialData(materialRowData, groupBy);
 
-  const groupMap = groupedData.reduce<Record<string, string[]>>(
-    (acc, { group, rows }) => {
-      const rowKeys = rows.map((r) => r.key.toString());
-      acc[group] = rowKeys;
-      return acc;
-    },
-    {}
-  );
+  // Flatten into a "displayItems" array
+  const displayItems: DisplayItem[] = [];
+  groupedData.forEach(({ group, rows }) => {
+    // Decide if we need a group header row
+    const isHeaderRendered =
+      groupBy === MaterialTableGroupBy.Material && rows.length <= 1
+        ? false
+        : true;
 
-  const allNumericKeys = Object.values(groupMap).flat();
+    if (isHeaderRendered) {
+      const displayGroup =
+        groupBy === MaterialTableGroupBy.Type
+          ? MaterialTypeMapping[group]
+          : group;
+      displayItems.push({
+        isGroupHeader: true,
+        groupKey: group,
+        rowKeys: rows.map((r) => r.key.toString()),
+        displayGroup,
+      });
+    }
 
-  const { selectedKeys, updateSelection } = useMaterialSelectionStore();
+    // Then detail rows
+    rows.forEach((row) => {
+      displayItems.push({
+        isGroupHeader: false,
+        rowData: row,
+      });
+    });
+  });
 
-  const handleSelectionChange = (
-    keysFromNextUi: Set<string> | string[] | string
-  ) => {
-    updateSelection(keysFromNextUi, allNumericKeys, groupMap);
-  };
+  // For columns, we define the "selection" column plus normal columns:
+  const columns = [
+    { key: "selection", label: "", width: "40px" },
+    ...MaterialTableColumns,
+  ];
 
-  const renderMaterialNameCell = (
-    item: MaterialDataRow,
-    groupBy: MaterialTableGroupBy
-  ) => {
-    if (
-      [MaterialTableGroupBy.Type, MaterialTableGroupBy.Material].includes(
-        groupBy
-      ) &&
-      item.seriesCount > 1
-    ) {
+  // We'll create a helper to render each cell based on columnKey:
+  const renderCell = (item: DisplayItem, columnKey: string) => {
+    // If it's the group header:
+    if (item.isGroupHeader) {
+      if (columnKey === "selection") {
+        // We place the group checkbox here
+        const groupSize = item.rowKeys ? item.rowKeys.length : 0;
+        const isDisabled = groupSize > 5;
+        return (
+          <TableCell>
+            <MaterialTableCheckbox
+              groupKey={item.groupKey}
+              rowKeys={item.rowKeys}
+              isDisabled={isDisabled}
+            />
+          </TableCell>
+        );
+      }
+      // The first actual data column: we'll display the group name in the first column only
+      if (columnKey === MaterialTableColumns[0].key) {
+        return (
+          <TableCell className="font-bold bg-gray-50 text-gray-600">
+            {item.displayGroup}
+          </TableCell>
+        );
+      }
+      // Otherwise, just an empty cell for the group row
+      return <TableCell className="bg-gray-50" />;
+    }
+
+    // Otherwise, it's a detail row:
+    const row = item.rowData!;
+    if (columnKey === "selection") {
+      // For a detail row, we show the row-level checkbox
+      const maxSelectionsReached = selectedKeys.size >= 5;
+      const isAlreadySelected = selectedKeys.has(row.key.toString());
+      const isDisabled = maxSelectionsReached && !isAlreadySelected;
+
       return (
-        <TableCell>{`${item.materialName} - ${item.regionName}`}</TableCell>
+        <TableCell>
+          <MaterialTableCheckbox
+            rowKey={row.key.toString()}
+            isDisabled={isDisabled}
+          />
+        </TableCell>
       );
     }
-    return <TableCell>{item.materialName}</TableCell>;
-  };
 
-  const renderChangeCell = (item: MaterialDataRow, columnKey: string) => {
-    const changeValue = parseFloat(getKeyValue(item, columnKey));
-    const colorClass = changeValue > 0 ? "text-green-600" : "text-red-600";
-    const arrow = changeValue > 0 ? " ↑" : " ↓";
-    return (
-      <TableCell>
-        <span className={colorClass}>
-          {changeValue.toFixed(2)}%{arrow}
-        </span>
-      </TableCell>
-    );
-  };
-
-  const renderTableCell = (
-    item: MaterialDataRow,
-    columnKey: string,
-    groupBy: MaterialTableGroupBy
-  ) => {
+    // If it's a normal column, handle special formatting or fallback:
     if (columnKey === "materialName") {
-      return renderMaterialNameCell(item, groupBy);
+      // If grouping by Type/Material and the row has multiple series, show region too
+      if (
+        [MaterialTableGroupBy.Type, MaterialTableGroupBy.Material].includes(
+          groupBy
+        ) &&
+        row.seriesCount > 1
+      ) {
+        return (
+          <TableCell>{`${row.materialName} - ${row.regionName}`}</TableCell>
+        );
+      }
+      return <TableCell>{row.materialName}</TableCell>;
     }
 
     if (columnKey.endsWith("Change")) {
-      return renderChangeCell(item, columnKey);
+      const val = parseFloat(row[columnKey as keyof MaterialDataRow] as string);
+      const colorClass = val > 0 ? "text-green-600" : "text-red-600";
+      const arrow = val > 0 ? " ↑" : " ↓";
+      return (
+        <TableCell>
+          <span className={colorClass}>{val.toFixed(2) + "%" + arrow}</span>
+        </TableCell>
+      );
     }
 
-    return <TableCell>{getKeyValue(item, columnKey)}</TableCell>;
+    // Default fallback:
+    return <TableCell>{row[columnKey as keyof MaterialDataRow]}</TableCell>;
   };
-
-  function renderGroupHeaderRow(
-    group: string,
-    rows: MaterialDataRow[],
-    groupBy: MaterialTableGroupBy
-  ) {
-    const isHeaderRendered =
-      groupBy === MaterialTableGroupBy.Material && rows.length <= 1;
-
-    const displayGroup =
-      groupBy === MaterialTableGroupBy.Type
-        ? MaterialTypeMapping[group]
-        : group;
-
-    return isHeaderRendered ? null : (
-      <TableRow key={group} className="bg-gray-100 text-gray-600 font-bold">
-        {MaterialTableColumns.map((col, i) => (
-          <TableCell key={`group-cell-${group}-${col.key}`}>
-            {i === 0 ? displayGroup : ""}
-          </TableCell>
-        ))}
-      </TableRow>
-    );
-  }
-
-  function renderDetailRow(
-    item: MaterialDataRow,
-    renderTableCell: any,
-    groupBy: MaterialTableGroupBy
-  ) {
-    return (
-      <TableRow key={item.key}>
-        {(columnKey) => renderTableCell(item, columnKey as string, groupBy)}
-      </TableRow>
-    );
-  }
 
   return (
     <div className="block overflow-auto h-full max-h-full">
-      <Table
-        aria-label="Materials Table"
-        isHeaderSticky
-        selectionMode="multiple"
-        selectedKeys={selectedKeys}
-        onSelectionChange={handleSelectionChange}
-      >
-        <TableHeader columns={MaterialTableColumns}>
+      <Table aria-label="Materials Table" isHeaderSticky>
+        <TableHeader columns={columns}>
           {(column) => (
-            <TableColumn key={column.key}>{column.label}</TableColumn>
+            <TableColumn
+              key={column.key}
+              width={column.width} // only the selection column has width="40px"
+            >
+              {column.label}
+            </TableColumn>
           )}
         </TableHeader>
-        <TableBody isLoading={isMaterialDataLoading}>
-          {groupedData.map(({ group, rows }) => (
-            <React.Fragment key={`group-fragment-${group}`}>
-              {renderGroupHeaderRow(group, rows, groupBy)}
-              {rows.map((item) =>
-                renderDetailRow(item, renderTableCell, groupBy)
-              )}
-            </React.Fragment>
-          ))}
+        <TableBody
+          items={displayItems}
+          loadingState={isLoading ? "loading" : "idle"}
+        >
+          {(item) => (
+            <TableRow
+              key={
+                item.isGroupHeader
+                  ? `group-${item.groupKey}`
+                  : item.rowData?.key
+              }
+              className={item.isGroupHeader ? "bg-gray-50" : ""}
+            >
+              {(columnKey) => renderCell(item, columnKey)}
+            </TableRow>
+          )}
         </TableBody>
       </Table>
     </div>
