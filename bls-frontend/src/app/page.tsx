@@ -5,7 +5,9 @@ export default function Home() {
   return (
     <div className="w-full h-full">
       <div className="h-[10%]">
-        <header className="p-8"></header>
+        <header className="p-8">
+          <h1 className="text-4xl text-center">BLS Data Explorer</h1>
+        </header>
       </div>
       <div className="flex h-[90%] p-2">
         <div className="table-wrapper h-full w-1/2 p-4">
