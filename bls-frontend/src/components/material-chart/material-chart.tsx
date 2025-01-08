@@ -83,7 +83,10 @@ function determineTimeUnit(data: TimeSeriesData) {
 export default function MaterialChart() {
   const { selectedKeys } = useMaterialSelectionStore();
   const { chartData, setChartData } = useChartDataStore();
+
   const forecastEnabled = useForecastToggleStore((s) => s.forecastToggle);
+  const rangeEnabled = useForecastToggleStore((s) => s.rangeToggle);
+
   const duration = useDurationStore((s) => s.duration);
   const { tableData } = useMaterialTableStore();
 
@@ -146,8 +149,8 @@ export default function MaterialChart() {
   const loadedSeries = relevantData.filter((r) => r.data);
 
   const { labels, datasets } = useMemo(
-    () => buildChartConfig(loadedSeries, tableData),
-    [loadedSeries, tableData]
+    () => buildChartConfig(loadedSeries, tableData, rangeEnabled),
+    [loadedSeries, tableData, rangeEnabled]
   );
 
   if (loadedSeries.length === 0) {
@@ -188,9 +191,10 @@ export default function MaterialChart() {
 
 function buildChartConfig(
   loadedSeries: { id: number; data?: TimeSeriesData }[],
-  materialData: MaterialDetail[]
+  materialData: MaterialDetail[],
+  rangeEnabled: boolean
 ) {
-  // A) gather all unique year-month strings
+  // A) Gather all unique year-month strings
   const allLabelsSet = new Set<string>();
   for (const { data } of loadedSeries) {
     if (!data) continue;
@@ -201,17 +205,21 @@ function buildChartConfig(
       allLabelsSet.add(`${pt.year}-${pt.month}`)
     );
   }
+
+  // Sort them chronologically
   const sortedLabels = Array.from(allLabelsSet).sort((a, b) => {
     const [yA, mA] = a.split("-").map(Number);
     const [yB, mB] = b.split("-").map(Number);
     return yA === yB ? mA - mB : yA - yB;
   });
+
+  // Convert to Date objects (Chart.js "time" scale)
   const dateLabels = sortedLabels.map((label) => {
     const [yy, mm] = label.split("-").map(Number);
     return new Date(yy, mm - 1);
   });
 
-  // B) colors
+  // B) Colors
   const colors = [
     "rgba(75,192,192,1)",
     "rgba(255,99,132,1)",
@@ -221,86 +229,195 @@ function buildChartConfig(
   ];
   let colorIndex = 0;
 
-  // C) build datasets
+  // C) Build datasets
   const datasets = loadedSeries.flatMap(({ id, data }) => {
     if (!data) return [];
 
     const baseLabel = getSeriesLabel(id, materialData);
     const timeUnit = determineTimeUnit(data);
-
     const color = colors[colorIndex % colors.length];
     colorIndex++;
 
-    // Maps
+    // 1) Map existing data
     const existingMap = new Map<string, number>();
     (data.existing_data || []).forEach((pt) => {
       const key = buildDateKey(pt.year, pt.month, timeUnit);
       existingMap.set(key, pt.value);
     });
 
+    // 2) Map forecast: yhat, lower, upper
     const forecastMap = new Map<string, number>();
+    const forecastMapLower = new Map<string, number>();
+    const forecastMapUpper = new Map<string, number>();
+
     (data.forecasted_data || []).forEach((pt) => {
       const key = buildDateKey(pt.year, pt.month, timeUnit);
       forecastMap.set(key, pt.yhat);
+      forecastMapLower.set(key, pt.yhat_lower);
+      forecastMapUpper.set(key, pt.yhat_upper);
     });
 
+    // 3) Convert them into arrays aligned with dateLabels
     const existingData = dateLabels.map((d) => {
       const key = buildDateKey(d.getFullYear(), d.getMonth() + 1, timeUnit);
       return existingMap.get(key) ?? null;
     });
+
     const forecastData = dateLabels.map((d) => {
       const key = buildDateKey(d.getFullYear(), d.getMonth() + 1, timeUnit);
       return forecastMap.get(key) ?? null;
     });
 
-    // Two main line datasets
-    const mainDatasets = [
-      {
-        label: `${baseLabel}`,
-        data: existingData,
-        borderColor: color,
-        backgroundColor: color,
-        spanGaps: true,
-        pointRadius: 1.5,
-        pointHoverRadius: 2,
-      },
-      {
-        label: ``,
-        data: forecastData,
-        borderColor: color,
-        borderDash: [5, 5],
-        backgroundColor: "rgba(0,0,0,0)",
-        spanGaps: false,
-        pointRadius: 1.5,
-        pointHoverRadius: 2,
-      },
-    ];
+    const forecastDataLower = dateLabels.map((d) => {
+      const key = buildDateKey(d.getFullYear(), d.getMonth() + 1, timeUnit);
+      return forecastMapLower.get(key) ?? null;
+    });
 
-    // Bridging line
-    const bridgingData = new Array(existingData.length).fill(null);
-    const lastExistingIndex = existingData.reduce(
-      (acc, val, idx) => (val != null ? idx : acc),
-      -1
-    );
-    const firstForecastIndex = forecastData.findIndex((val) => val != null);
+    const forecastDataUpper = dateLabels.map((d) => {
+      const key = buildDateKey(d.getFullYear(), d.getMonth() + 1, timeUnit);
+      return forecastMapUpper.get(key) ?? null;
+    });
 
-    if (
-      lastExistingIndex !== -1 &&
-      firstForecastIndex !== -1 &&
-      firstForecastIndex > lastExistingIndex
+    // 4) Create bridging arrays (central, lower, upper)
+    function createBridgingData(
+      forecastArr: (number | null)[],
+      existingArr: (number | null)[]
     ) {
-      bridgingData[lastExistingIndex] = existingData[lastExistingIndex];
-      bridgingData[firstForecastIndex] = forecastData[firstForecastIndex];
-      mainDatasets.push({
-        label: "",
-        data: bridgingData,
-        borderColor: color,
-        borderDash: [5, 5],
-        backgroundColor: "rgba(0,0,0,0)",
-        spanGaps: false,
-      });
+      const lastExistingIndex = existingArr.reduce(
+        (acc, val, idx) => (val != null ? idx : acc),
+        -1
+      );
+      const firstForecastIndex = forecastArr.findIndex((val) => val != null);
+
+      const bridging = new Array(existingArr.length).fill(null);
+      if (
+        lastExistingIndex !== -1 &&
+        firstForecastIndex !== -1 &&
+        firstForecastIndex > lastExistingIndex
+      ) {
+        bridging[lastExistingIndex] = existingArr[lastExistingIndex];
+        bridging[firstForecastIndex] = forecastArr[firstForecastIndex];
+      }
+      return bridging;
     }
-    return mainDatasets;
+
+    const bridgingDataCentral = createBridgingData(forecastData, existingData);
+    const bridgingDataLower = createBridgingData(
+      forecastDataLower,
+      existingData
+    );
+    const bridgingDataUpper = createBridgingData(
+      forecastDataUpper,
+      existingData
+    );
+
+    // 5) Always show forecast (central)
+    //    Change here: if rangeEnabled is off => forecast label is hidden by setting label = ""
+    const forecastLabel = rangeEnabled ? `${baseLabel} (Forecast)` : "";
+    const forecastDataset = {
+      label: forecastLabel,
+      data: forecastData,
+      borderColor: color,
+      borderDash: [5, 5],
+      backgroundColor: "rgba(0,0,0,0)",
+      spanGaps: false,
+      pointRadius: 1.5,
+      pointHoverRadius: 2,
+      order: 10, // draw on top of bridging lines
+    };
+
+    // 6) Bridging dataset for the central forecast
+    const bridgingCentral = {
+      label: "",
+      data: bridgingDataCentral,
+      borderColor: color,
+      borderDash: [5, 5],
+      backgroundColor: "rgba(0,0,0,0)",
+      spanGaps: false,
+      pointRadius: 0,
+      order: 9, // just below the forecast line
+    };
+
+    // 7) If range is enabled, also build lower/upper bridging & lines
+    let bridgingRange: any[] = [];
+    let rangeDatasets: any[] = [];
+
+    if (rangeEnabled) {
+      bridgingRange = [
+        {
+          label: "", // bridging line for Lower
+          data: bridgingDataLower,
+          borderColor: "red",
+          borderDash: [5, 5],
+          backgroundColor: "rgba(0,0,0,0)",
+          spanGaps: false,
+          pointRadius: 0,
+          order: 9,
+        },
+        {
+          label: "", // bridging line for Upper
+          data: bridgingDataUpper,
+          borderColor: "green",
+          borderDash: [5, 5],
+          backgroundColor: "rgba(0,0,0,0)",
+          spanGaps: false,
+          pointRadius: 0,
+          order: 9,
+        },
+      ];
+
+      rangeDatasets = [
+        {
+          label: `${baseLabel} (Forecast Lower)`,
+          data: forecastDataLower,
+          borderColor: "red",
+          borderDash: [5, 5],
+          backgroundColor: "rgba(0,0,0,0)",
+          spanGaps: true,
+          pointRadius: 0,
+          pointHoverRadius: 0,
+          order: 10, // same layer as forecast
+        },
+        {
+          label: `${baseLabel} (Forecast Upper)`,
+          data: forecastDataUpper,
+          borderColor: "green",
+          borderDash: [5, 5],
+          backgroundColor: "rgba(0,0,0,0)",
+          spanGaps: true,
+          pointRadius: 0,
+          pointHoverRadius: 0,
+          order: 10,
+        },
+      ];
+    }
+
+    // 8) Existing data label: omit “(Actual)” if range is disabled
+    const actualLabel = rangeEnabled ? `${baseLabel} (Actual)` : baseLabel;
+    const existingDataset = {
+      label: actualLabel,
+      data: existingData,
+      borderColor: color,
+      backgroundColor: color,
+      spanGaps: true,
+      pointRadius: 1.5,
+      pointHoverRadius: 2,
+      order: 1,
+    };
+
+    // 9) Combine everything
+    return [
+      // (A) Existing data
+      existingDataset,
+      // (B) bridging lines for central forecast
+      bridgingCentral,
+      // (C) bridging lines for lower & upper if rangeEnabled
+      ...bridgingRange,
+      // (D) forecast (central)
+      forecastDataset,
+      // (E) forecast lines for lower & upper if rangeEnabled
+      ...rangeDatasets,
+    ];
   });
 
   return {
@@ -323,6 +440,7 @@ function ReactLegend({ datasets }: { datasets: any[] }) {
         }}
       >
         {datasets.map((item, idx) => {
+          // Skip bridging lines (label === "") or anything with no label
           if (!item.label) return null;
           return (
             <li
