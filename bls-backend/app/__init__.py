@@ -3,8 +3,10 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_apscheduler import APScheduler
 from flask_cors import CORS
+from app.constants import BLS_API_KEY
 from dotenv import load_dotenv
 
+load_dotenv()
 db = SQLAlchemy()
 migrate = Migrate()
 scheduler = APScheduler()
@@ -15,8 +17,6 @@ from app.seeders.seed_time_series import seed_time_series
 
 class Config:
     SCHEDULER_API_ENABLED = True
-
-load_dotenv()
 
 def create_app():
     app = Flask(__name__)
