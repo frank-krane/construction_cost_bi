@@ -1,46 +1,44 @@
+// ✅ Safe version
 "use client";
 
-import {
-  ForecastToggleState,
-  useForecastToggleStore,
-} from "@/store/include-forecast-store";
+import { useForecastToggleStore } from "@/store/include-forecast-store";
 import { Switch } from "@nextui-org/switch";
 
 export default function MaterialChartToggle() {
+  // Always call these Hooks, regardless of forecastToggle's value
+  const forecastToggle = useForecastToggleStore((s) => s.forecastToggle);
+  const rangeToggle = useForecastToggleStore((s) => s.rangeToggle);
+  const setForecastToggle = useForecastToggleStore((s) => s.setForecastToggle);
+  const setRangeToggle = useForecastToggleStore((s) => s.setRangeToggle);
+
+  const handleForecastChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setForecastToggle(event.target.checked);
+  };
+
+  const handleRangeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setRangeToggle(event.target.checked);
+  };
+
   return (
     <>
-      <div className="flex justify-start">
-        <div className="pr-2 flex align-middle justify-center">
-          Include Range
+      <div className="flex justify-between w-full">
+        <div className="flex justify-end">
+          <div className="pr-2 flex align-middle justify-center">Forecast</div>
+          <div>
+            <Switch checked={forecastToggle} onChange={handleForecastChange} />
+          </div>
         </div>
-        <div>
-          <Switch
-            checked={useForecastToggleStore(
-              (state: ForecastToggleState) => state.rangeToggle
-            )}
-            onChange={(event) =>
-              useForecastToggleStore
-                .getState()
-                .setRangeToggle((event.target as HTMLInputElement).checked)
-            }
-          />
-        </div>
-      </div>
 
-      <div className="flex justify-end">
-        <div className="pr-2 flex align-middle justify-center">Forecast</div>
-        <div>
-          <Switch
-            checked={useForecastToggleStore(
-              (state: ForecastToggleState) => state.forecastToggle
-            )}
-            onChange={(event) =>
-              useForecastToggleStore
-                .getState()
-                .setForecastToggle((event.target as HTMLInputElement).checked)
-            }
-          />
-        </div>
+        {forecastToggle && (
+          <div className="flex justify-end">
+            <div className="pr-2 flex align-middle justify-center">
+              Include Range
+            </div>
+            <div>
+              <Switch checked={rangeToggle} onChange={handleRangeChange} />
+            </div>
+          </div>
+        )}
       </div>
     </>
   );

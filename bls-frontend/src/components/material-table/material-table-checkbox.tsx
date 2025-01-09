@@ -3,6 +3,7 @@
 import { Checkbox } from "@nextui-org/checkbox";
 import { Tooltip } from "@nextui-org/tooltip";
 import { useMaterialSelectionStore } from "@/store/material-selection-store";
+import { useForecastToggleStore } from "@/store/include-forecast-store";
 import { MouseEvent } from "react";
 
 interface MaterialTableCheckboxProps {
@@ -18,9 +19,18 @@ export default function MaterialTableCheckbox({
   rowKeys,
   rowKey,
   isDisabled = false,
-  disabledTooltip = "You can’t select more than 5 items",
+  disabledTooltip,
 }: MaterialTableCheckboxProps) {
   const { selectedKeys, toggleGroup, toggleRow } = useMaterialSelectionStore();
+  const rangeToggle = useForecastToggleStore((s) => s.rangeToggle);
+
+  // We'll pick a default tooltip message if not provided
+  const maxItems = rangeToggle ? 1 : 5;
+  const fallbackTooltip = `You can’t select more than ${maxItems} item${
+    maxItems > 1 ? "s" : ""
+  }.`;
+
+  const tooltipText = disabledTooltip || fallbackTooltip;
 
   // Determine if the checkbox is currently selected:
   let isSelected = false;
@@ -43,7 +53,7 @@ export default function MaterialTableCheckbox({
   };
 
   return (
-    <Tooltip isDisabled={!isDisabled} content={disabledTooltip} showArrow>
+    <Tooltip isDisabled={!isDisabled} content={tooltipText} showArrow>
       <Checkbox
         isSelected={isSelected}
         isDisabled={isDisabled}

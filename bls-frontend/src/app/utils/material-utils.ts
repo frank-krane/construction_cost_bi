@@ -1,9 +1,17 @@
-import { MaterialDetail, MaterialDataRow, MaterialTableGroupBy, MaterialDataGroup } from '../constants/types';
+import {
+    MaterialDetail,
+    MaterialDataRow,
+    MaterialTableGroupBy,
+    MaterialDataGroup,
+} from "../constants/types";
 
-export function convertMaterialDetailToDataRows(detail: MaterialDetail): MaterialDataRow[] {
+// Convert each MaterialDetail -> MaterialDataRow[]
+export function convertMaterialDetailToDataRows(
+    detail: MaterialDetail
+): MaterialDataRow[] {
     const seriesCount = detail.series.length;
 
-    return detail.series.map(series => ({
+    return detail.series.map((series) => ({
         key: series.id,
         materialName: detail.materialName,
         monthlyChange: series.monthlyChange,
@@ -14,14 +22,17 @@ export function convertMaterialDetailToDataRows(detail: MaterialDetail): Materia
         lastUpdated: series.lastUpdated,
         materialType: detail.materialType,
         regionName: series.region.regionName,
-        seriesCount
+        seriesCount,
     }));
 }
 
-export function convertMaterialDetailsToDataRows(details: MaterialDetail[]): MaterialDataRow[] {
-    return details.flatMap(detail => convertMaterialDetailToDataRows(detail));
+export function convertMaterialDetailsToDataRows(
+    details: MaterialDetail[]
+): MaterialDataRow[] {
+    return details.flatMap((detail) => convertMaterialDetailToDataRows(detail));
 }
 
+// Group the data for display
 export const groupMaterialData = (
     data: MaterialDataRow[],
     groupBy: MaterialTableGroupBy
@@ -55,7 +66,9 @@ export const groupMaterialData = (
     }));
 };
 
-
+/**
+ * Debounce utility
+ */
 export function debounce<T extends (...args: any[]) => any>(
     fn: T,
     delayMs: number
@@ -73,45 +86,62 @@ export function debounce<T extends (...args: any[]) => any>(
     };
 }
 
+/**
+ * General selection logic with a configurable max selection
+ */
 export function handleSelectionChange(
     key: string,
     currentSelection: Set<string>,
-    totalSelected?: number
+    totalSelected: number,
+    maxSelection: number
 ): Set<string> {
     const newSelection = new Set(currentSelection);
 
+    // If already selected, deselect
     if (newSelection.has(key)) {
         newSelection.delete(key);
         return newSelection;
     }
 
-    if ((totalSelected ?? newSelection.size) >= 5) {
+    // If at max capacity, ignore
+    if (totalSelected >= maxSelection) {
         return newSelection;
     }
 
+    // Otherwise, add
     newSelection.add(key);
     return newSelection;
 }
 
+/**
+ * Toggle an entire group of items with a max selection constraint
+ */
 export function handleToggleGroup(
     currentSelection: Set<string>,
-    rowKeys: string[]
+    rowKeys: string[],
+    rangeToggle: boolean
 ): Set<string> {
     const newSet = new Set(currentSelection);
 
-    if (rowKeys.length > 5) {
+    const maxSelection = rangeToggle ? 1 : 5;
+
+    // If the group is larger than our max, do nothing
+    if (rowKeys.length > maxSelection) {
         return newSet;
     }
 
+    // Check if all items in the group are already selected
     const allSelected = rowKeys.every((rk) => newSet.has(rk));
 
     if (allSelected) {
+        // Deselect them all
         rowKeys.forEach((rk) => {
             newSet.delete(rk);
         });
     } else {
+        // Select them up to the max
         for (const rk of rowKeys) {
-            if (newSet.size < 5) {
+            if (newSet.size < maxSelection) {
                 newSet.add(rk);
             } else {
                 break;
@@ -123,7 +153,14 @@ export function handleToggleGroup(
 
 export function handleToggleRow(
     rowKey: string,
-    currentSelection: Set<string>
+    currentSelection: Set<string>,
+    rangeToggle: boolean
 ): Set<string> {
-    return handleSelectionChange(rowKey, currentSelection, currentSelection.size);
+    const maxSelection = rangeToggle ? 1 : 5;
+    return handleSelectionChange(
+        rowKey,
+        currentSelection,
+        currentSelection.size,
+        maxSelection
+    );
 }

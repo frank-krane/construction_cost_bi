@@ -5,6 +5,7 @@ import {
     handleToggleGroup,
     handleToggleRow,
 } from "@/app/utils/material-utils";
+import { useForecastToggleStore } from "@/store/include-forecast-store";
 
 interface MaterialSelectionState {
     selectedKeys: Set<string>;
@@ -24,13 +25,19 @@ export const useMaterialSelectionStore = create<MaterialSelectionState>()(
 
         toggleGroup: (_groupKey: string, rowKeys: string[]) => {
             const current = get().selectedKeys;
-            const newSelection = handleToggleGroup(current, rowKeys);
+
+            const rangeToggle = useForecastToggleStore.getState().rangeToggle;
+            const newSelection = handleToggleGroup(current, rowKeys, rangeToggle);
+
             set({ selectedKeys: newSelection });
         },
 
         toggleRow: (rowKey: string) => {
             const current = get().selectedKeys;
-            const newSelection = handleToggleRow(rowKey, current);
+
+            const rangeToggle = useForecastToggleStore.getState().rangeToggle;
+            const newSelection = handleToggleRow(rowKey, current, rangeToggle);
+
             set({ selectedKeys: newSelection });
         },
     })

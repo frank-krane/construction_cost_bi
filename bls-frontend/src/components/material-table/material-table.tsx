@@ -23,6 +23,7 @@ import { MaterialDataRow, MaterialTableGroupBy } from "@/app/constants/types";
 import { useMaterialSelectionStore } from "@/store/material-selection-store";
 import { useGroupByStore } from "@/store/material-group-by-store";
 import { useMaterialTableStore } from "@/store/material-table-store";
+import { useForecastToggleStore } from "@/store/include-forecast-store";
 
 import MaterialTableCheckbox from "./material-table-checkbox";
 
@@ -42,6 +43,7 @@ export default function MaterialTable() {
 
   const groupBy = useGroupByStore((s) => s.groupBy);
   const { selectedKeys } = useMaterialSelectionStore();
+  const { rangeToggle } = useForecastToggleStore(); // range toggle from forecast store
 
   const handleFetch = async () => {
     setIsLoading(true);
@@ -111,9 +113,11 @@ export default function MaterialTable() {
     // If it's the group header:
     if (item.isGroupHeader) {
       if (columnKey === "selection") {
-        // We place the group checkbox here
         const groupSize = item.rowKeys ? item.rowKeys.length : 0;
-        const isDisabled = groupSize > 5;
+
+        // If range is on, max = 1, so disable the group checkbox if groupSize > 1
+        const isDisabled = rangeToggle ? groupSize > 1 : groupSize > 5;
+
         return (
           <TableCell>
             <MaterialTableCheckbox
@@ -139,8 +143,11 @@ export default function MaterialTable() {
     // Otherwise, it's a detail row:
     const row = item.rowData!;
     if (columnKey === "selection") {
-      // For a detail row, we show the row-level checkbox
-      const maxSelectionsReached = selectedKeys.size >= 5;
+      // If range is on, max = 1
+      const maxSelectionsReached = rangeToggle
+        ? selectedKeys.size >= 1
+        : selectedKeys.size >= 5;
+
       const isAlreadySelected = selectedKeys.has(row.key.toString());
       const isDisabled = maxSelectionsReached && !isAlreadySelected;
 
