@@ -165,7 +165,7 @@ export default function MaterialChart() {
       x: {
         type: "time" as const,
         time: {
-          unit: "month",
+          unit: "month" as "month",
           tooltipFormat: "MMM yyyy",
         },
         grid: { display: false },
@@ -283,7 +283,7 @@ function buildChartConfig(
       forecastArr: (number | null)[],
       existingArr: (number | null)[]
     ) {
-      const lastExistingIndex = existingArr.reduce(
+      const lastExistingIndex = existingArr.reduce<number>(
         (acc, val, idx) => (val != null ? idx : acc),
         -1
       );
@@ -440,7 +440,6 @@ function ReactLegend({ datasets }: { datasets: any[] }) {
         }}
       >
         {datasets.map((item, idx) => {
-          // Skip bridging lines (label === "") or anything with no label
           if (!item.label) return null;
           return (
             <li

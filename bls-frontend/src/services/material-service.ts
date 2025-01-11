@@ -1,7 +1,7 @@
 import { MaterialDetail } from "@/app/constants/types";
 import { TimeSeriesDataResponse } from "@/app/constants/types";
 
-const MATERIALS_API_URL = "http://localhost:5000/api/materials";
+const MATERIALS_API_URL = `${process.env.NEXT_PUBLIC_API_URL}/materials`;
 
 export const fetchMaterialsDetails = async (): Promise<MaterialDetail[]> => {
     try {
@@ -22,7 +22,7 @@ export const fetchMaterialsDetails = async (): Promise<MaterialDetail[]> => {
     }
 };
 
-const TIME_SERIES_API_URL = "http://localhost:5000/api/time_series/predict";
+const TIME_SERIES_API_URL = `${process.env.NEXT_PUBLIC_API_URL}/time_series/predict`;
 
 export async function fetchTimeSeriesBatch(
     seriesIds: number[],

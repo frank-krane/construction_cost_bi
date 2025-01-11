@@ -137,7 +137,7 @@ export default function MaterialTable() {
         );
       }
       // Otherwise, just an empty cell for the group row
-      return <TableCell className="bg-gray-50" />;
+      return <TableCell className="bg-gray-50">{""}</TableCell>;
     }
 
     // Otherwise, it's a detail row:
@@ -197,12 +197,7 @@ export default function MaterialTable() {
       <Table aria-label="Materials Table" isHeaderSticky>
         <TableHeader columns={columns}>
           {(column) => (
-            <TableColumn
-              key={column.key}
-              width={column.width} // only the selection column has width="40px"
-            >
-              {column.label}
-            </TableColumn>
+            <TableColumn key={column.key}>{column.label}</TableColumn>
           )}
         </TableHeader>
         <TableBody
@@ -218,7 +213,7 @@ export default function MaterialTable() {
               }
               className={item.isGroupHeader ? "bg-gray-50" : ""}
             >
-              {(columnKey) => renderCell(item, columnKey)}
+              {(columnKey) => renderCell(item, columnKey.toString())}
             </TableRow>
           )}
         </TableBody>
