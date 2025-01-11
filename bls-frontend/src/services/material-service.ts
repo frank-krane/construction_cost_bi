@@ -3,6 +3,9 @@ import { TimeSeriesDataResponse } from "@/app/constants/types";
 
 const MATERIALS_API_URL = `${process.env.NEXT_PUBLIC_API_URL}/materials`;
 
+/**
+ * Fetch material details from the API
+ */
 export const fetchMaterialsDetails = async (): Promise<MaterialDetail[]> => {
     try {
         const response = await fetch(`${MATERIALS_API_URL}/details`, {
@@ -24,6 +27,9 @@ export const fetchMaterialsDetails = async (): Promise<MaterialDetail[]> => {
 
 const TIME_SERIES_API_URL = `${process.env.NEXT_PUBLIC_API_URL}/time_series/predict`;
 
+/**
+ * Fetch time series data in batch, optionally including forecast
+ */
 export async function fetchTimeSeriesBatch(
     seriesIds: number[],
     includeForecast: boolean,

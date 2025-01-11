@@ -14,6 +14,9 @@ interface MaterialTableCheckboxProps {
   disabledTooltip?: string;
 }
 
+/**
+ * Renders a checkbox for selecting material rows or groups.
+ */
 export default function MaterialTableCheckbox({
   groupKey,
   rowKeys,
@@ -38,6 +41,9 @@ export default function MaterialTableCheckbox({
     isSelected = selectedKeys.has(rowKey);
   }
 
+  /**
+   * Handles the checkbox change event by toggling row or group selection.
+   */
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     e.stopPropagation();
     if (groupKey && rowKeys) {

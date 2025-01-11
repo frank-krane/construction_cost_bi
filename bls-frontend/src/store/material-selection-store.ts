@@ -7,6 +7,9 @@ import {
 } from "@/app/utils/material-utils";
 import { useForecastToggleStore } from "@/store/include-forecast-store";
 
+/**
+ * Manages selected material keys with optional range toggle
+ */
 interface MaterialSelectionState {
     selectedKeys: Set<string>;
     setSelection: (keys: Set<string>) => void;
@@ -15,6 +18,9 @@ interface MaterialSelectionState {
     toggleRow: (rowKey: string) => void;
 }
 
+/**
+ * Zustand store for material selection management
+ */
 export const useMaterialSelectionStore = create<MaterialSelectionState>()(
     (set, get) => ({
         selectedKeys: new Set(),

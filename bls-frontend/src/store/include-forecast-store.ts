@@ -1,6 +1,9 @@
 import { create } from "zustand";
 import { useMaterialSelectionStore } from "@/store/material-selection-store";
 
+/**
+ * Tracks forecast and range toggles
+ */
 export interface ForecastToggleState {
     forecastToggle: boolean;
     rangeToggle: boolean;
@@ -8,6 +11,9 @@ export interface ForecastToggleState {
     setRangeToggle: (rangeToggle: boolean) => void;
 }
 
+/**
+ * Zustand store for managing forecast and range toggles
+ */
 export const useForecastToggleStore = create<ForecastToggleState>()((set) => ({
     forecastToggle: false,
     rangeToggle: false,

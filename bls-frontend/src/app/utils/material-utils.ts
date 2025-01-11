@@ -5,7 +5,9 @@ import {
     MaterialDataGroup,
 } from "../constants/types";
 
-// Convert each MaterialDetail -> MaterialDataRow[]
+/**
+ * Converts a single MaterialDetail to a list of MaterialDataRow
+ */
 export function convertMaterialDetailToDataRows(
     detail: MaterialDetail
 ): MaterialDataRow[] {
@@ -26,13 +28,18 @@ export function convertMaterialDetailToDataRows(
     }));
 }
 
+/**
+ * Converts an array of MaterialDetail to a list of MaterialDataRow
+ */
 export function convertMaterialDetailsToDataRows(
     details: MaterialDetail[]
 ): MaterialDataRow[] {
     return details.flatMap((detail) => convertMaterialDetailToDataRows(detail));
 }
 
-// Group the data for display
+/**
+ * Groups MaterialDataRow items by a specified property
+ */
 export const groupMaterialData = (
     data: MaterialDataRow[],
     groupBy: MaterialTableGroupBy
@@ -67,7 +74,7 @@ export const groupMaterialData = (
 };
 
 /**
- * Debounce utility
+ * Debounce utility function
  */
 export function debounce<T extends (...args: any[]) => any>(
     fn: T,
@@ -97,24 +104,21 @@ export function handleSelectionChange(
 ): Set<string> {
     const newSelection = new Set(currentSelection);
 
-    // If already selected, deselect
     if (newSelection.has(key)) {
         newSelection.delete(key);
         return newSelection;
     }
 
-    // If at max capacity, ignore
     if (totalSelected >= maxSelection) {
         return newSelection;
     }
 
-    // Otherwise, add
     newSelection.add(key);
     return newSelection;
 }
 
 /**
- * Toggle an entire group of items with a max selection constraint
+ * Toggle an entire group of items with a configurable max selection
  */
 export function handleToggleGroup(
     currentSelection: Set<string>,
@@ -125,21 +129,17 @@ export function handleToggleGroup(
 
     const maxSelection = rangeToggle ? 1 : 5;
 
-    // If the group is larger than our max, do nothing
     if (rowKeys.length > maxSelection) {
         return newSet;
     }
 
-    // Check if all items in the group are already selected
     const allSelected = rowKeys.every((rk) => newSet.has(rk));
 
     if (allSelected) {
-        // Deselect them all
         rowKeys.forEach((rk) => {
             newSet.delete(rk);
         });
     } else {
-        // Select them up to the max
         for (const rk of rowKeys) {
             if (newSet.size < maxSelection) {
                 newSet.add(rk);
@@ -151,6 +151,9 @@ export function handleToggleGroup(
     return newSet;
 }
 
+/**
+ * Toggle a single row
+ */
 export function handleToggleRow(
     rowKey: string,
     currentSelection: Set<string>,

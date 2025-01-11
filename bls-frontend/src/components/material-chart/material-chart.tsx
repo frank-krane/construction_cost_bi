@@ -41,10 +41,16 @@ ChartJS.register(
   Filler
 );
 
+/**
+ * Builds a cache key for time-series data.
+ */
 function buildCacheKey(seriesId: number, forecast: boolean, duration: string) {
   return `${seriesId}:${forecast ? "1" : "0"}:${duration}`;
 }
 
+/**
+ * Gets a label for the given series ID.
+ */
 function getSeriesLabel(seriesId: number, materialData: MaterialDetail[]) {
   for (const mat of materialData) {
     for (const ser of mat.series) {
@@ -56,6 +62,9 @@ function getSeriesLabel(seriesId: number, materialData: MaterialDetail[]) {
   return `Series ${seriesId}`;
 }
 
+/**
+ * Builds a date label based on year, month, and time unit.
+ */
 function buildDateKey(year: number, month: number, unit: string) {
   if (unit === "quarter") {
     const quarter = Math.ceil(month / 3);
@@ -67,6 +76,9 @@ function buildDateKey(year: number, month: number, unit: string) {
   return `${year}-${month}`;
 }
 
+/**
+ * Determines the time aggregation unit from existing data.
+ */
 function determineTimeUnit(data: TimeSeriesData) {
   const months = data.existing_data.map((pt) => pt.month);
   const uniqueMonths = new Set(months);
@@ -80,6 +92,9 @@ function determineTimeUnit(data: TimeSeriesData) {
   return "month";
 }
 
+/**
+ * Renders the MaterialChart component.
+ */
 export default function MaterialChart() {
   const { selectedKeys } = useMaterialSelectionStore();
   const { chartData, setChartData } = useChartDataStore();
@@ -96,6 +111,9 @@ export default function MaterialChart() {
       .map(Number);
   }, [selectedKeys]);
 
+  /**
+   * Fetches missing time-series data for the given IDs if not already in chartData.
+   */
   async function fetchMissingIds(
     ids: number[],
     forecast: boolean,
@@ -128,6 +146,9 @@ export default function MaterialChart() {
     }
   }
 
+  /**
+   * Debounced function to delay fetching of missing IDs.
+   */
   const debouncedFetch = useMemo(
     () => debounce(fetchMissingIds, 500),
     [chartData]
@@ -189,12 +210,14 @@ export default function MaterialChart() {
   );
 }
 
+/**
+ * Builds configured datasets and labels for the chart.
+ */
 function buildChartConfig(
   loadedSeries: { id: number; data?: TimeSeriesData }[],
   materialData: MaterialDetail[],
   rangeEnabled: boolean
 ) {
-  // A) Gather all unique year-month strings
   const allLabelsSet = new Set<string>();
   for (const { data } of loadedSeries) {
     if (!data) continue;
@@ -206,20 +229,17 @@ function buildChartConfig(
     );
   }
 
-  // Sort them chronologically
   const sortedLabels = Array.from(allLabelsSet).sort((a, b) => {
     const [yA, mA] = a.split("-").map(Number);
     const [yB, mB] = b.split("-").map(Number);
     return yA === yB ? mA - mB : yA - yB;
   });
 
-  // Convert to Date objects (Chart.js "time" scale)
   const dateLabels = sortedLabels.map((label) => {
     const [yy, mm] = label.split("-").map(Number);
     return new Date(yy, mm - 1);
   });
 
-  // B) Colors
   const colors = [
     "rgba(75,192,192,1)",
     "rgba(255,99,132,1)",
@@ -229,7 +249,6 @@ function buildChartConfig(
   ];
   let colorIndex = 0;
 
-  // C) Build datasets
   const datasets = loadedSeries.flatMap(({ id, data }) => {
     if (!data) return [];
 
@@ -238,14 +257,12 @@ function buildChartConfig(
     const color = colors[colorIndex % colors.length];
     colorIndex++;
 
-    // 1) Map existing data
     const existingMap = new Map<string, number>();
     (data.existing_data || []).forEach((pt) => {
       const key = buildDateKey(pt.year, pt.month, timeUnit);
       existingMap.set(key, pt.value);
     });
 
-    // 2) Map forecast: yhat, lower, upper
     const forecastMap = new Map<string, number>();
     const forecastMapLower = new Map<string, number>();
     const forecastMapUpper = new Map<string, number>();
@@ -257,7 +274,6 @@ function buildChartConfig(
       forecastMapUpper.set(key, pt.yhat_upper);
     });
 
-    // 3) Convert them into arrays aligned with dateLabels
     const existingData = dateLabels.map((d) => {
       const key = buildDateKey(d.getFullYear(), d.getMonth() + 1, timeUnit);
       return existingMap.get(key) ?? null;
@@ -278,7 +294,6 @@ function buildChartConfig(
       return forecastMapUpper.get(key) ?? null;
     });
 
-    // 4) Create bridging arrays (central, lower, upper)
     function createBridgingData(
       forecastArr: (number | null)[],
       existingArr: (number | null)[]
@@ -311,8 +326,6 @@ function buildChartConfig(
       existingData
     );
 
-    // 5) Always show forecast (central)
-    //    Change here: if rangeEnabled is off => forecast label is hidden by setting label = ""
     const forecastLabel = rangeEnabled ? `${baseLabel} (Forecast)` : "";
     const forecastDataset = {
       label: forecastLabel,
@@ -323,10 +336,9 @@ function buildChartConfig(
       spanGaps: false,
       pointRadius: 1.5,
       pointHoverRadius: 2,
-      order: 10, // draw on top of bridging lines
+      order: 10,
     };
 
-    // 6) Bridging dataset for the central forecast
     const bridgingCentral = {
       label: "",
       data: bridgingDataCentral,
@@ -335,17 +347,16 @@ function buildChartConfig(
       backgroundColor: "rgba(0,0,0,0)",
       spanGaps: false,
       pointRadius: 0,
-      order: 9, // just below the forecast line
+      order: 9,
     };
 
-    // 7) If range is enabled, also build lower/upper bridging & lines
     let bridgingRange: any[] = [];
     let rangeDatasets: any[] = [];
 
     if (rangeEnabled) {
       bridgingRange = [
         {
-          label: "", // bridging line for Lower
+          label: "",
           data: bridgingDataLower,
           borderColor: "red",
           borderDash: [5, 5],
@@ -355,7 +366,7 @@ function buildChartConfig(
           order: 9,
         },
         {
-          label: "", // bridging line for Upper
+          label: "",
           data: bridgingDataUpper,
           borderColor: "green",
           borderDash: [5, 5],
@@ -376,7 +387,7 @@ function buildChartConfig(
           spanGaps: true,
           pointRadius: 0,
           pointHoverRadius: 0,
-          order: 10, // same layer as forecast
+          order: 10,
         },
         {
           label: `${baseLabel} (Forecast Upper)`,
@@ -392,7 +403,6 @@ function buildChartConfig(
       ];
     }
 
-    // 8) Existing data label: omit “(Actual)” if range is disabled
     const actualLabel = rangeEnabled ? `${baseLabel} (Actual)` : baseLabel;
     const existingDataset = {
       label: actualLabel,
@@ -405,17 +415,11 @@ function buildChartConfig(
       order: 1,
     };
 
-    // 9) Combine everything
     return [
-      // (A) Existing data
       existingDataset,
-      // (B) bridging lines for central forecast
       bridgingCentral,
-      // (C) bridging lines for lower & upper if rangeEnabled
       ...bridgingRange,
-      // (D) forecast (central)
       forecastDataset,
-      // (E) forecast lines for lower & upper if rangeEnabled
       ...rangeDatasets,
     ];
   });
@@ -426,6 +430,9 @@ function buildChartConfig(
   };
 }
 
+/**
+ * Renders a legend for the chart.
+ */
 function ReactLegend({ datasets }: { datasets: any[] }) {
   return (
     <div className="max-h-52 overflow-y-auto mb-auto">
