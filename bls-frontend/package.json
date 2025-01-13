@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@nextui-org/checkbox": "^2.3.8",
+    "@nextui-org/skeleton": "^2.2.5",
     "@nextui-org/switch": "^2.2.7",
     "@nextui-org/system": "^2.4.5",
     "@nextui-org/table": "^2.2.7",

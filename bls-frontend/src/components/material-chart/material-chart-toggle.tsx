@@ -1,8 +1,10 @@
-// ✅ Safe version
 "use client";
 
 import { useForecastToggleStore } from "@/store/include-forecast-store";
 import { Switch } from "@nextui-org/switch";
+import { Tooltip } from "@nextui-org/tooltip";
+import Image from "next/image";
+import infoIcon from "@/../public/info-icon.svg";
 
 export default function MaterialChartToggle() {
   // Always call these Hooks, regardless of forecastToggle's value
@@ -21,7 +23,7 @@ export default function MaterialChartToggle() {
 
   return (
     <>
-      <div className="flex justify-between w-full">
+      <div className="flex justify-between w-full ml-16 mr-16">
         <div className="flex justify-end">
           <div className="pr-2 flex align-middle justify-center">Forecast</div>
           <div>
@@ -31,10 +33,25 @@ export default function MaterialChartToggle() {
 
         {forecastToggle && (
           <div className="flex justify-end">
-            <div className="pr-2 flex align-middle justify-center">
+            <div className="mr-2 flex items-center justify-start">
+              <Tooltip
+                offset={1}
+                content="You can only view range for one item at a time."
+              >
+                <Image
+                  priority
+                  src={infoIcon}
+                  height={24}
+                  width={24}
+                  alt="Information about the range toggle"
+                  className="cursor-pointer"
+                />
+              </Tooltip>
+            </div>
+            <div className="pr-2 flex items-center justify-center">
               Include Range
             </div>
-            <div>
+            <div className="flex items-center justify-center">
               <Switch checked={rangeToggle} onChange={handleRangeChange} />
             </div>
           </div>

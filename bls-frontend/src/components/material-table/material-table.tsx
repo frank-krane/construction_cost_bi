@@ -10,6 +10,8 @@ import {
   TableCell,
 } from "@nextui-org/table";
 
+import { Skeleton } from "@nextui-org/skeleton";
+
 import {
   MaterialTableColumns,
   MaterialTypeMapping,
@@ -194,37 +196,42 @@ export default function MaterialTable() {
 
   return (
     <div className="h-full">
-      <Table
-        aria-label="Materials Table"
-        isHeaderSticky
-        classNames={{
-          base: "h-full overflow-scroll",
-          table: "min-h-full",
-        }}
-      >
-        <TableHeader columns={columns}>
-          {(column) => (
-            <TableColumn key={column.key}>{column.label}</TableColumn>
-          )}
-        </TableHeader>
-        <TableBody
-          items={displayItems}
-          loadingState={isLoading ? "loading" : "idle"}
+      <Skeleton isLoaded={!isLoading} className="h-full">
+        <Table
+          aria-label="Materials Table"
+          isHeaderSticky
+          classNames={{
+            base: "h-full overflow-scroll",
+            table: "min-h-full",
+          }}
         >
-          {(item) => (
-            <TableRow
-              key={
-                item.isGroupHeader
-                  ? `group-${item.groupKey}`
-                  : item.rowData?.key
-              }
-              className={item.isGroupHeader ? "bg-gray-50" : ""}
-            >
-              {(columnKey) => renderCell(item, columnKey.toString())}
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
+          <TableHeader columns={columns}>
+            {(column) => (
+              <TableColumn key={column.key}>{column.label}</TableColumn>
+            )}
+          </TableHeader>
+          <TableBody
+            items={displayItems}
+            loadingState={isLoading ? "loading" : "idle"}
+          >
+            {(item) => (
+              <TableRow
+                key={
+                  item.isGroupHeader
+                    ? `group-${item.groupKey}`
+                    : item.rowData?.key
+                }
+                className={item.isGroupHeader ? "bg-gray-50" : ""}
+              >
+                {(columnKey) => renderCell(item, columnKey.toString())}
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </Skeleton>
+      {isError && (
+        <div className="text-red-600 mt-2 text-sm">Error: {errorMessage}</div>
+      )}
     </div>
   );
 }

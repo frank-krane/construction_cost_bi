@@ -1,8 +1,10 @@
 "use client";
 
-import React, { useEffect, useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { debounce } from "@/app/utils/material-utils";
 import { Line } from "@uconn-its/react-chartjs-2-react19-temp";
+
+import { Skeleton } from "@nextui-org/skeleton";
 
 import {
   Chart as ChartJS,
@@ -105,6 +107,8 @@ export default function MaterialChart() {
   const duration = useDurationStore((s) => s.duration);
   const { tableData } = useMaterialTableStore();
 
+  const [isLoading, setIsLoading] = useState(false);
+
   const numericIds = useMemo(() => {
     return Array.from(selectedKeys)
       .filter((k) => /^\d+$/.test(k))
@@ -127,8 +131,8 @@ export default function MaterialChart() {
       }
     }
     if (missing.length === 0) return;
-
     try {
+      setIsLoading(true);
       const response: TimeSeriesDataResponse = await fetchTimeSeriesBatch(
         missing,
         forecast,
@@ -143,6 +147,8 @@ export default function MaterialChart() {
       setChartData(newDataMap);
     } catch (error) {
       console.error("Error fetching time-series data:", error);
+    } finally {
+      setIsLoading(false);
     }
   }
 
@@ -174,41 +180,44 @@ export default function MaterialChart() {
     [loadedSeries, tableData, rangeEnabled]
   );
 
-  if (loadedSeries.length === 0) {
-    return <div className="text-center mt-60">No chart data selected.</div>;
-  }
-
-  const chartDataObj = { labels, datasets };
-  const options = {
-    responsive: true,
-    maintainAspectRatio: false,
-    scales: {
-      x: {
-        type: "time" as const,
-        time: {
-          unit: "month" as "month",
-          tooltipFormat: "MMM yyyy",
-        },
-        grid: { display: false },
-      },
-      y: {
-        grid: { display: false },
-      },
-    },
-    plugins: {
-      legend: { display: false },
-    },
-  };
-
   return (
-    <div className="w-full h-[250px]">
-      <Line data={chartDataObj} options={options} />
-      <div style={{ marginTop: "1rem" }}>
-        <ReactLegend datasets={chartDataObj.datasets} />
-      </div>
-    </div>
+    <Skeleton isLoaded={!isLoading}>
+      {loadedSeries.length === 0 ? (
+        <div className="text-center mt-60">No chart data selected.</div>
+      ) : (
+        <>
+          <div className="w-full h-[250px]">
+            <Line data={{ labels, datasets }} options={chartOptions} />
+          </div>
+          <div style={{ marginTop: "1rem" }}>
+            <ReactLegend datasets={datasets} />
+          </div>
+        </>
+      )}
+    </Skeleton>
   );
 }
+
+const chartOptions = {
+  responsive: true,
+  maintainAspectRatio: false,
+  scales: {
+    x: {
+      type: "time" as const,
+      time: {
+        unit: "month" as "month",
+        tooltipFormat: "MMM yyyy",
+      },
+      grid: { display: false },
+    },
+    y: {
+      grid: { display: false },
+    },
+  },
+  plugins: {
+    legend: { display: false },
+  },
+};
 
 /**
  * Builds configured datasets and labels for the chart.
