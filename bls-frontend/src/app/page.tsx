@@ -9,8 +9,8 @@ export default function Home() {
           <h1 className="text-4xl text-center">BLS Data Explorer</h1>
         </header>
       </div>
-      <div className="flex h-[90%] p-2">
-        <div className="table-wrapper h-full w-1/2 p-4">
+      <div className="flex h-[85%] p-2">
+        <div className="table-wrapper w-1/2 h-full p-4">
           <MaterialTableWrapper />
         </div>
         <div className="chart-wrapper h-full w-1/2 p-4">

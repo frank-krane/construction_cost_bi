@@ -193,8 +193,15 @@ export default function MaterialTable() {
   };
 
   return (
-    <div className="block overflow-auto h-full max-h-full">
-      <Table aria-label="Materials Table" isHeaderSticky>
+    <div className="h-full">
+      <Table
+        aria-label="Materials Table"
+        isHeaderSticky
+        classNames={{
+          base: "h-full overflow-scroll",
+          table: "min-h-full",
+        }}
+      >
         <TableHeader columns={columns}>
           {(column) => (
             <TableColumn key={column.key}>{column.label}</TableColumn>
