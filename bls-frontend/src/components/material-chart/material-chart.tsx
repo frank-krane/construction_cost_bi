@@ -334,8 +334,8 @@ function buildChartConfig(
       borderDash: [5, 5],
       backgroundColor: "rgba(0,0,0,0)",
       spanGaps: false,
-      pointRadius: 1.5,
-      pointHoverRadius: 2,
+      pointRadius: 2,
+      pointHoverRadius: 2.5,
       order: 10,
     };
 
@@ -385,8 +385,8 @@ function buildChartConfig(
           borderDash: [5, 5],
           backgroundColor: "rgba(0,0,0,0)",
           spanGaps: true,
-          pointRadius: 0,
-          pointHoverRadius: 0,
+          pointRadius: 2,
+          pointHoverRadius: 2.5,
           order: 10,
         },
         {
@@ -396,8 +396,8 @@ function buildChartConfig(
           borderDash: [5, 5],
           backgroundColor: "rgba(0,0,0,0)",
           spanGaps: true,
-          pointRadius: 0,
-          pointHoverRadius: 0,
+          pointRadius: 2,
+          pointHoverRadius: 2.5,
           order: 10,
         },
       ];
@@ -410,8 +410,8 @@ function buildChartConfig(
       borderColor: color,
       backgroundColor: color,
       spanGaps: true,
-      pointRadius: 1.5,
-      pointHoverRadius: 2,
+      pointRadius: 2,
+      pointHoverRadius: 2.5,
       order: 1,
     };
 
