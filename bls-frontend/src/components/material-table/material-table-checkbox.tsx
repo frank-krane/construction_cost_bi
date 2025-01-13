@@ -54,12 +54,14 @@ export default function MaterialTableCheckbox({
   };
 
   return (
-    <Tooltip isDisabled={!isDisabled} content={tooltipText} showArrow>
-      <Checkbox
-        isSelected={isSelected}
-        isDisabled={isDisabled}
-        onChange={handleChange}
-      />
+    <Tooltip isDisabled={!isDisabled} content={tooltipText}>
+      <span>
+        <Checkbox
+          isSelected={isSelected}
+          isDisabled={isDisabled}
+          onChange={handleChange}
+        />
+      </span>
     </Tooltip>
   );
 }
