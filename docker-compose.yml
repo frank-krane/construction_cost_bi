@@ -1,0 +1,24 @@
+services:
+  backend:
+    build:
+      context: ./bls-backend
+      dockerfile: Dockerfile
+    container_name: bls-backend
+    volumes:
+      - ./bls-backend:/app
+    ports:
+      - "5000:5000"
+    env_file:
+      - ./bls-backend/.env
+
+  frontend:
+    build:
+      context: ./bls-frontend
+      dockerfile: Dockerfile
+    container_name: bls-frontend
+    volumes:
+      - ./bls-frontend:/app
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./bls-frontend/.env
