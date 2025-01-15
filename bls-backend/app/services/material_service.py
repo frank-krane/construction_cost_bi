@@ -7,6 +7,8 @@ from app.schemas.series_schema import SeriesSchema
 from app.utils.date_utils import get_end_of_month_date
 from app.models.time_series_data import TimeSeriesData
 import pandas as pd
+from app.services.time_series_data_service import TimeSeriesDataService
+import json
 
 material_schema = MaterialSchema()
 series_schema = SeriesSchema()
@@ -30,7 +32,6 @@ class MaterialService:
     def get_material_by_id(material_id):
         return Material.query.get(material_id)
 
-class MaterialDetailedService:
     @staticmethod
     def get_materials_detailed():
         materials = Material.query.all()
@@ -87,3 +88,19 @@ class MaterialDetailedService:
             }
             results.append(details)
         return results
+
+    @staticmethod
+    def export_materials_json():
+        materials_detailed = MaterialService.get_materials_detailed()
+        series_ids = []
+        for material in materials_detailed:
+            for s in material["series"]:
+                series_ids.append(s["id"])
+        series_data = TimeSeriesDataService.predict_series_data(list(set(series_ids)),
+                                                                duration='Max',
+                                                                include_forecast=True)
+        result = {
+            "materialsDetailed": materials_detailed,
+            "seriesData": json.loads(series_data)
+        }
+        return json.dumps(result, indent=2)

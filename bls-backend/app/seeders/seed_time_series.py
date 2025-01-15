@@ -4,12 +4,7 @@ from app.models.time_series_data import TimeSeriesData
 from app.utils.bls_api import fetch_bls_data_in_chunks, find_start_year
 from datetime import datetime
 from app.seeders.seed_forecast import seed_forecast
-from app.constants import BLS_API_KEY, BLS_BASE_URL
-
-# def seed_time_series(force_seed=False):
-#     # print base url and api key
-#     print('BLS_BASE_URL', BLS_BASE_URL)
-#     print('BLS_API_KEY', BLS_API_KEY)
+from app.services.material_service import MaterialService
 
 def seed_time_series(force_seed=False):
     if not force_seed and TimeSeriesData.query.first():
@@ -54,6 +49,9 @@ def seed_time_series(force_seed=False):
                 db.session.add(time_series_entry)
     db.session.commit()
     seed_forecast()
+    data_json = MaterialService.export_materials_json()
+    with open('dump.json', 'w') as f:
+        f.write(data_json)
 
 def get_month_from_period(period):
     if period.startswith("M"):
