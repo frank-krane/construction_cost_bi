@@ -133,7 +133,7 @@ export default function MaterialTable() {
       // The first actual data column: we'll display the group name in the first column only
       if (columnKey === MaterialTableColumns[0].key) {
         return (
-          <TableCell className="font-bold bg-gray-50 text-gray-600">
+          <TableCell className="font-bold bg-gray-50 text-sky-600">
             {item.displayGroup}
           </TableCell>
         );
